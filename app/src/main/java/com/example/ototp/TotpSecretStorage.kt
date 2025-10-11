@@ -16,12 +16,12 @@ class TotpSecretStorage(context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    fun saveSecret(service: String, secret: String) {
-        sharedPreferences.edit { putString(service, secret) }
+    fun saveSecret(id: Long, secret: String) {
+        sharedPreferences.edit { putString("totp_secret_$id", secret) }
     }
 
-    fun getSecret(service: String): String? {
-        return sharedPreferences.getString(service, null)
+    fun getSecret(id: Long): String? {
+        return sharedPreferences.getString("totp_secret_$id", null)
     }
 
     fun getSecrets(): List<Secret> {
@@ -30,8 +30,8 @@ class TotpSecretStorage(context: Context) {
         }
     }
 
-    fun deleteSecret(service: String) {
-        sharedPreferences.edit { remove(service) }
+    fun deleteSecret(id: Long) {
+        sharedPreferences.edit { remove("totp_secret_$id") }
     }
 }
 

@@ -17,9 +17,10 @@ object OTPAuthParser {
             val issuer = uri.getQueryParameter("issuer")
             val algorithm = uri.getQueryParameter("algorithm")
             val digits = uri.getQueryParameter("digits")?.toIntOrNull()
-            val period = uri.getQueryParameter("period")?.toLongOrNull()
+            val period = uri.getQueryParameter("period")?.toIntOrNull()
 
             return TOTPToken(
+                id = null,
                 label = label,
                 secret = secret,
                 issuer = issuer,
@@ -35,10 +36,11 @@ object OTPAuthParser {
 }
 
 data class TOTPToken(
+    val id: Long?,
     val label: String,
     val secret: String,
     val issuer: String?,
     val algorithm: String?,
-    val digits: Int?,
-    val period: Long?
+    var digits: Int? = 6,
+    var period: Int? = 30
 )

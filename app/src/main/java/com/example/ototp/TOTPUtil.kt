@@ -7,7 +7,9 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 object TOTPUtil {
-    fun generateTOTP(secret: String, digits: Int = 6, period: Long = 30): String {
+    val supportedDigitsList = listOf(4, 5, 6, 7, 8)
+
+    fun generateTOTP(secret: String, digits: Int = 6, period: Int = 30): String {
         val key = Base64.decode(secret, Base64.DEFAULT)
         val time = System.currentTimeMillis() / 1000 / period
         val data = ByteBuffer.allocate(8).putLong(time).array()
@@ -24,7 +26,7 @@ object TOTPUtil {
     fun generateTOTPBase32(
         secret: String,
         digits: Int = 6,
-        period: Long = 30,
+        period: Int = 30,
         timeSeconds: Long? = null // for testing
     ): String {
         // Base32 decoding (RFC 6238, Google Authenticator, etc.)

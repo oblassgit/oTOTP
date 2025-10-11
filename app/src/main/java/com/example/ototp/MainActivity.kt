@@ -12,6 +12,7 @@ import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,10 +23,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
@@ -59,25 +65,39 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import com.example.ototp.ui.theme.OTOTPTheme
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        val db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            AppDatabase.DB_NAME
+        ).build()
+
         val totpSecretStorage = TotpSecretStorage(context = this)
-        val viewModel = MyViewModel(totpSecretStorage)
+        val dao = db.tokenDao()
+        val repository = TokenRepository(dao, totpSecretStorage)
+        val viewModel = MyViewModel(repository)
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
             OTOTPTheme {
-                NavHost(navController, startDestination = "home",
+                NavHost(
+                    navController, startDestination = "home",
                     enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None }
-                    ) {
+                ) {
                     composable("home") { MainScreen(navController, viewModel) }
-                    composable("add",
+                    composable(
+                        "add",
                         enterTransition = {
                             slideIntoContainer(
                                 animationSpec = tween(300, easing = EaseIn),
@@ -90,8 +110,18 @@ class MainActivity : ComponentActivity() {
                                 towards = AnimatedContentTransitionScope.SlideDirection.End
                             )
                         },
-                    ) { AddSecretScreen(navController, viewModel) }
-                    composable("scan",
+                    ) {
+                        AddOrEditTokenScreen(viewModel.tokenToEdit, {
+                            viewModel.addToken(it)
+                            navController.navigateUp()
+                            viewModel.tokenToEdit = null
+                        }, {
+                            navController.navigateUp()
+                            viewModel.tokenToEdit = null
+                        })
+                    }
+                    composable(
+                        "scan",
                         enterTransition = {
                             slideIntoContainer(
                                 animationSpec = tween(300, easing = EaseIn),
@@ -100,20 +130,30 @@ class MainActivity : ComponentActivity() {
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                animationSpec = tween(300, easing = EaseOut                  ),
+                                animationSpec = tween(300, easing = EaseOut),
                                 towards = AnimatedContentTransitionScope.SlideDirection.End
                             )
                         },
-                        ) {
+                    ) {
                         QRScanner(onNavigateUp = { navController.navigateUp() }, onQrCodeScanned = {
                             navController.navigateUp()
                             viewModel.tokenToEdit = OTPAuthParser.parse(it)
-                            if (viewModel.tokenToEdit != null) navController.navigate("edit")
+                            if (viewModel.tokenToEdit != null) navController.navigate("add")
                         })
                     }
                     composable("edit") {
                         viewModel.tokenToEdit?.let {
-                            EditTokenScreen(it, {}, { navController.navigateUp() })
+                            AddOrEditTokenScreen(
+                                it,
+                                {
+                                    viewModel.updateToken(it)
+                                    navController.navigateUp()
+                                    viewModel.tokenToEdit = null
+                                },
+                                {
+                                    navController.navigateUp()
+                                    viewModel.tokenToEdit = null
+                                })
                         }
                     }
                 }
@@ -124,18 +164,40 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(navController: NavController, viewModel: MyViewModel) {
-    val secrets by viewModel.secrets.collectAsState()
-    MainScreen(secrets, { navController.navigate("add") }, { navController.navigate("scan") })
+    MainScreen(
+        viewModel,
+        { navController.navigate("add") },
+        { navController.navigate("scan") },
+        { viewModel.deleteToken(it) },
+        onEdit = {
+            viewModel.getSecret(it.id)?.let { secret ->
+                viewModel.tokenToEdit = TOTPToken(
+                    id = it.id,
+                    label = it.label,
+                    secret = secret,
+                    issuer = it.issuer,
+                    algorithm = it.algorithm,
+                    digits = it.digits,
+                    period = it.period
+                )
+            }
+            navController.navigate("edit")
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    secrets: List<Secret>,
+    viewModel: MyViewModel,
     onManual: () -> Unit,
     onQRCode: () -> Unit,
+    onDelete: (id: Long) -> Unit,
+    onEdit: (token: TOTPTokenEntity) -> Unit,
     totpPeriod: Long = 30L // seconds
 ) {
+    val tokens by viewModel.tokens.collectAsState()
+
     // Timer state
     var secondsLeft by remember { mutableStateOf(0L) }
     var tick by remember { mutableStateOf(0L) }
@@ -165,25 +227,39 @@ fun MainScreen(
             )
         }
     ) { innerPadding ->
-        Box(Modifier.fillMaxSize().padding(innerPadding)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(bottom = 80.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 80.dp)
             ) {
-                items(secrets) { secret ->
-                    // Recompute token every 30 seconds (on tick)
-                    val token = remember(secret.secret, tick) { TOTPUtil.generateTOTPBase32(secret.secret) }
-                    TOTPItem(token, secret.service, secondsLeft)
+                items(tokens) { token ->
+                    val secret = viewModel.getSecret(token.id) ?: ""
+                    val totp = remember(secret, tick) {
+                        TOTPUtil.generateTOTPBase32(
+                            secret = secret,
+                            digits = token.digits ?: 6,
+                            period = token.period ?: 30
+                        )
+                    }
+                    TOTPItem(
+                        totp,
+                        token.label,
+                        secondsLeft,
+                        { onEdit(token) },
+                        { onDelete(token.id) }
+                        )
                 }
             }
-            /*FloatingActionButton (
-                onClick = onFabClicked,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp)
-            ) {
-                Icon(Icons.Default.Add, "New")
-            }*/
 
             SimpleFabMenu(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(12.dp),
                 onManual = { onManual() },
                 onQRCode = { onQRCode() }
             )
@@ -192,29 +268,68 @@ fun MainScreen(
 }
 
 @Composable
-fun TOTPItem(token: String, service: String, secondsLeft: Long) {
+fun TOTPItem(
+    token: String,
+    label: String,
+    secondsLeft: Long,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
     Card(
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 4.dp)
-            .fillMaxWidth(),
-        onClick = {
-            clipboardManager.setText(AnnotatedString(token))
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(token))
+                },
+                onLongClick = {
+                    expanded = true
+                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                }
+            )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
         ) {
 
             Text(
-                text = service
+                text = label
             )
             Text(
                 text = token,
                 style = MaterialTheme.typography.headlineMedium,
                 color = if (secondsLeft <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+            )
+        }
+
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text("Edit") },
+                onClick = {
+                    onEdit()
+                    expanded = false
+                          },
+                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+            )
+            DropdownMenuItem(
+                text = { Text("Delete") },
+                onClick = {
+                    onDelete()
+                    expanded = false
+                          },
+                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+            )
+            DropdownMenuItem(
+                text = { Text("Copy") },
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(token))
+                    expanded = false
+                          },
+                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
             )
         }
     }
@@ -234,7 +349,7 @@ fun ExpressiveLinearCountdown(
         contentAlignment = Alignment.Center
     ) {
         CircularWavyProgressIndicator(
-            progress = {progress}
+            progress = { progress }
         )
 
         Text(secondsLeft.toString(), style = LocalTextStyle.current.copy())
@@ -299,6 +414,6 @@ fun MainScreenPreview() {
     val secrets = listOf(
         Secret("Test", "OIJSOIFJOI")
     )
-    MainScreen(secrets, {}, {})
+    //MainScreen(secrets, {}, {})
 }
 
