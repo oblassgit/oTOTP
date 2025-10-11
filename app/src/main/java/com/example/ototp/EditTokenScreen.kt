@@ -1,21 +1,28 @@
 package com.example.ototp
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,22 +33,64 @@ import com.example.ototp.ui.theme.OTOTPTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOrEditTokenScreen(
-    initialToken: TOTPToken? = null,
+    tokenId: Long?,
+    viewModel: MyViewModel,
     onSave: (TOTPToken) -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // If initialToken is null, use empty/default values
-    var label by remember { mutableStateOf(initialToken?.label ?: "") }
-    var secret by remember { mutableStateOf(initialToken?.secret ?: "") }
-    var issuer by remember { mutableStateOf(initialToken?.issuer ?: "") }
-    var algorithm by remember { mutableStateOf(initialToken?.algorithm ?: "") }
-    var digits by remember { mutableStateOf(initialToken?.digits ?: 6) }
-    var period by remember { mutableStateOf(initialToken?.period ?: 30) }
+    // 1. Load entity from DB if editing
+    val entity by if (tokenId != null) viewModel.getToken(tokenId).collectAsState(initial = null)
+    else remember { mutableStateOf<TOTPTokenEntity?>(null) }
 
-    var secretVisibility by remember { mutableStateOf(false) }
+    // 2. Load secret only if editing
+    var secretLoaded by remember { mutableStateOf(false) }
+    var secret by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(tokenId, entity) {
+        if (tokenId != null && !secretLoaded) {
+            secret = viewModel.getSecret(tokenId) ?: ""
+            secretLoaded = true
+        }
+    }
 
-    val isEditMode = initialToken != null
+    // 3. Use draft if adding via QR, otherwise defaults
+    val draft = viewModel.tokenDraft.takeIf { tokenId == null }
+    val isEditMode = tokenId != null
+
+    // 4. Initialize state from entity (edit), draft (add w/ QR), or empty (manual add)
+    var account by rememberSaveable { mutableStateOf(
+        draft?.account ?: entity?.label ?: ""
+    )}
+    var issuer by rememberSaveable { mutableStateOf(
+        draft?.issuer ?: entity?.issuer ?: ""
+    )}
+    var algorithm by rememberSaveable { mutableStateOf(
+        draft?.algorithm ?: entity?.algorithm ?: Algorithm.SHA1
+    )}
+    var digits by rememberSaveable { mutableStateOf(
+        draft?.digits ?: entity?.digits ?: 6
+    )}
+    var period by rememberSaveable { mutableStateOf(
+        draft?.period ?: entity?.period ?: 30
+    )}
+    var secretField by rememberSaveable { mutableStateOf(
+        draft?.secret ?: secret
+    )}
+    var secretVisibility by rememberSaveable { mutableStateOf(false) }
+
+    // 5. When entity or secret changes (edit mode), update fields if not already set
+    LaunchedEffect(entity, secret) {
+        if (isEditMode) {
+            entity?.let { entity ->
+                account = entity.label?: ""
+                issuer = entity.issuer
+                algorithm = entity.algorithm
+                digits = entity.digits ?: 6
+                period = entity.period ?: 30
+                secretField = secret
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -49,26 +98,30 @@ fun AddOrEditTokenScreen(
             TopAppBar(
                 title = { Text(if (isEditMode) "Edit Token" else "Add Token") },
                 navigationIcon = {
-                    IconButton(onClick = { onNavigateUp() }) {
+                    IconButton(onClick = {
+                        // Clear draft on exit
+                        viewModel.tokenDraft = null
+                        onNavigateUp()
+                    }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
                 actions = {
                     IconButton(
+                        enabled = issuer.isNotBlank() && secretField.isNotBlank(),
                         onClick = {
-                            if (label.isNotEmpty() && secret.isNotEmpty()) {
-                                onSave(
-                                    TOTPToken(
-                                        id = initialToken?.id,
-                                        label = label,
-                                        secret = secret,
-                                        issuer = issuer.ifBlank { null },
-                                        algorithm = algorithm.ifBlank { null },
-                                        digits = digits,
-                                        period = period
-                                    )
-                                )
-                            }
+                            val token = TOTPToken(
+                                id = if (isEditMode) entity?.id else null,
+                                account = account,
+                                secret = secretField,
+                                issuer = issuer,
+                                algorithm = algorithm,
+                                digits = digits,
+                                period = period
+                            )
+                            onSave(token)
+                            // Clear draft after save
+                            viewModel.tokenDraft = null
                         }
                     ) { Icon(Icons.Default.Check, contentDescription = "Save") }
                 }
@@ -81,120 +134,102 @@ fun AddOrEditTokenScreen(
                 .fillMaxSize()
                 .padding(12.dp)
         ) {
-            Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                OutlinedTextField(
-                    value = label,
-                    onValueChange = { label = it },
-                    label = { Text("Label") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                /*OutlinedTextField(
-                    value = secret,
-                    onValueChange = { secret = it },
-                    label = { Text("Secret") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )*/
-                OutlinedTextField(
-                    value = secret,
-                    onValueChange = { secret = it },
-                    label = { Text("Secret") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = if (!secretVisibility) PasswordVisualTransformation() else VisualTransformation.None,
-                    trailingIcon =  {
-                        IconButton(onClick = { secretVisibility = !secretVisibility }) {
-                            if (secretVisibility) Icon(Icons.Default.VisibilityOff, "toggle visibility off") else Icon(Icons.Default.Visibility, "toggle visibility on")
-                        }
-                    }
-                )
-                OutlinedTextField(
-                    value = issuer,
-                    onValueChange = { issuer = it },
-                    label = { Text("Issuer (optional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = algorithm,
-                    onValueChange = { algorithm = it },
-                    label = { Text("Algorithm (optional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                /*OutlinedTextField(
-                    value = digits,
-                    onValueChange = { digits = it.filter { c -> c.isDigit() } },
-                    label = { Text("Digits (optional)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = period,
-                    onValueChange = { period = it.filter { c -> c.isDigit() } },
-                    label = { Text("Period (optional)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )*/
-                TokenOptionsDropdown(
-                    digits = digits,
-                    onDigitsChange = { digits = it },
-                    period = period,
-                    onPeriodChange = { period = it }
-                )
-            }
-        }
-    }
-}
-@Composable
-fun DigitSelectDialog(
-    selection: Int
-) {
-    Dialog(
-        onDismissRequest = {}
-    ) {
-        val list = TOTPUtil.supportedDigitsList
-        Card {
-
-            LazyColumn(
-                modifier = Modifier.padding(16.dp).fillMaxWidth()
-            ) {
-                items(list) { digits ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(
-                            selected = selection == digits,
-                            onClick = {
-
+            if (isEditMode && entity == null) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Column(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    OutlinedTextField(
+                        value = account,
+                        onValueChange = { account = it },
+                        label = { Text("Account") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = secretField,
+                        onValueChange = { secretField = it },
+                        label = { Text("Secret") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = if (!secretVisibility) PasswordVisualTransformation() else VisualTransformation.None,
+                        trailingIcon = {
+                            IconButton(onClick = { secretVisibility = !secretVisibility }) {
+                                if (secretVisibility) Icon(Icons.Default.VisibilityOff, "Hide") else Icon(Icons.Default.Visibility, "Show")
                             }
-                        )
+                        }
+                    )
+                    OutlinedTextField(
+                        value = issuer,
+                        onValueChange = { issuer = it },
+                        label = { Text("Issuer (optional)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    AdvancedOptionsSection {
 
-                        Text(digits.toString())
+                        TokenOptionsDropdown(
+                            digits = digits,
+                            onDigitsChange = { digits = it },
+                            period = period,
+                            onPeriodChange = { period = it },
+                            algorithm = algorithm,
+                            onAlgorithmChange = { algorithm = it }
+                        )
                     }
                 }
             }
         }
-
     }
 }
 
-@Preview
 @Composable
-fun DigitSelectDialogPreview() {
-    OTOTPTheme {
-        Box(
-            Modifier.fillMaxSize()
-                .background(Color.White)
-        ) {
+fun AdvancedOptionsSection(
+    title: String = "Advanced Options",
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
 
-            DigitSelectDialog(6)
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { expanded = !expanded }
+                .padding(vertical = 8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (expanded) "Collapse" else "Expand"
+            )
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                content()
+            }
         }
     }
 }
@@ -207,7 +242,9 @@ fun TokenOptionsDropdown(
     onDigitsChange: (Int) -> Unit,
     period: Int,
     onPeriodChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    algorithm: Algorithm,
+    onAlgorithmChange: (Algorithm) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val digitOptions = TOTPUtil.supportedDigitsList
     val periodOptions = listOf(30, 60)
@@ -215,8 +252,40 @@ fun TokenOptionsDropdown(
     // State for dropdown expanded status
     var digitsExpanded by remember { mutableStateOf(false) }
     var periodExpanded by remember { mutableStateOf(false) }
+    var algorithmExpanded by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = algorithmExpanded,
+            onExpandedChange = { algorithmExpanded = !algorithmExpanded }
+        ) {
+            OutlinedTextField(
+                value = algorithm.toString(),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Algorithm") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = algorithmExpanded) },
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = algorithmExpanded,
+                onDismissRequest = { algorithmExpanded = false }
+            ) {
+                Algorithm.entries.forEach { entry ->
+                    DropdownMenuItem(
+                        text = { Text(entry.toString()) },
+                        onClick = {
+                            onAlgorithmChange(entry)
+                            algorithmExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
         // Digits Dropdown
         ExposedDropdownMenuBox(
             expanded = digitsExpanded,
@@ -245,8 +314,6 @@ fun TokenOptionsDropdown(
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Period Dropdown
         ExposedDropdownMenuBox(

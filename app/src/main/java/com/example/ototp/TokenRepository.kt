@@ -1,6 +1,7 @@
 package com.example.ototp
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
 class TokenRepository(
@@ -9,7 +10,7 @@ class TokenRepository(
 ) {
     suspend fun addToken(token: TOTPToken): Long {
         val entity = TOTPTokenEntity(
-            label = token.label,
+            label = token.account,
             issuer = token.issuer,
             algorithm = token.algorithm,
             digits = token.digits,
@@ -24,7 +25,7 @@ class TokenRepository(
         require(token.id != null) { "Token ID required for update" }
         val entity = TOTPTokenEntity(
             id = token.id,
-            label = token.label,
+            label = token.account,
             issuer = token.issuer,
             algorithm = token.algorithm,
             digits = token.digits,
@@ -42,6 +43,8 @@ class TokenRepository(
     suspend fun getAllTokens(): List<TOTPTokenEntity> = withContext(Dispatchers.IO) {
         dao.getAllTokens()
     }
+
+    fun getToken(id: Long): Flow<TOTPTokenEntity> = dao.getTokenFlow(id)
 
     fun getSecret(tokenId: Long): String? = secretStorage.getSecret(tokenId)
 

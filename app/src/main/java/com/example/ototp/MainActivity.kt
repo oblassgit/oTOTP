@@ -62,9 +62,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.room.Room
 import com.example.ototp.ui.theme.OTOTPTheme
 import kotlinx.coroutines.delay
@@ -111,13 +113,11 @@ class MainActivity : ComponentActivity() {
                             )
                         },
                     ) {
-                        AddOrEditTokenScreen(viewModel.tokenToEdit, {
+                        AddOrEditTokenScreen(null, viewModel, {
                             viewModel.addToken(it)
                             navController.navigateUp()
-                            viewModel.tokenToEdit = null
                         }, {
                             navController.navigateUp()
-                            viewModel.tokenToEdit = null
                         })
                     }
                     composable(
@@ -137,23 +137,34 @@ class MainActivity : ComponentActivity() {
                     ) {
                         QRScanner(onNavigateUp = { navController.navigateUp() }, onQrCodeScanned = {
                             navController.navigateUp()
-                            viewModel.tokenToEdit = OTPAuthParser.parse(it)
-                            if (viewModel.tokenToEdit != null) navController.navigate("add")
+                            viewModel.tokenDraft = OTPAuthParser.parse(it)
+                            navController.navigate("add")
                         })
                     }
-                    composable("edit") {
-                        viewModel.tokenToEdit?.let {
-                            AddOrEditTokenScreen(
-                                it,
-                                {
-                                    viewModel.updateToken(it)
-                                    navController.navigateUp()
-                                    viewModel.tokenToEdit = null
-                                },
-                                {
-                                    navController.navigateUp()
-                                    viewModel.tokenToEdit = null
-                                })
+                    composable(
+                        "edit/{tokenId}",
+                        arguments = listOf(navArgument("tokenId") { type = NavType.LongType }),
+                        enterTransition = {
+                            slideIntoContainer(
+                                animationSpec = tween(300, easing = EaseIn),
+                                towards = AnimatedContentTransitionScope.SlideDirection.Start
+                            )
+                        },
+                        exitTransition = {
+                            slideOutOfContainer(
+                                animationSpec = tween(300, easing = EaseOut),
+                                towards = AnimatedContentTransitionScope.SlideDirection.End
+                            )
+                        },
+                    ) { backStackEntry ->
+                        val tokenId = backStackEntry.arguments?.getLong("tokenId")
+                        if (tokenId != null) {
+                            AddOrEditTokenScreen(tokenId = tokenId, viewModel = viewModel, onSave = {
+                                viewModel.updateToken(it)
+                                navController.navigateUp()
+                            }, onNavigateUp = {
+                                navController.navigateUp()
+                            })
                         }
                     }
                 }
@@ -170,18 +181,7 @@ fun MainScreen(navController: NavController, viewModel: MyViewModel) {
         { navController.navigate("scan") },
         { viewModel.deleteToken(it) },
         onEdit = {
-            viewModel.getSecret(it.id)?.let { secret ->
-                viewModel.tokenToEdit = TOTPToken(
-                    id = it.id,
-                    label = it.label,
-                    secret = secret,
-                    issuer = it.issuer,
-                    algorithm = it.algorithm,
-                    digits = it.digits,
-                    period = it.period
-                )
-            }
-            navController.navigate("edit")
+            navController.navigate("edit/${it.id}")
         },
     )
 }
@@ -249,6 +249,7 @@ fun MainScreen(
                     TOTPItem(
                         totp,
                         token.label,
+                        token.issuer,
                         secondsLeft,
                         { onEdit(token) },
                         { onDelete(token.id) }
@@ -270,7 +271,8 @@ fun MainScreen(
 @Composable
 fun TOTPItem(
     token: String,
-    label: String,
+    account: String?,
+    issuer: String,
     secondsLeft: Long,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -297,7 +299,12 @@ fun TOTPItem(
         ) {
 
             Text(
-                text = label
+                text = issuer,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = account?:""
             )
             Text(
                 text = token,

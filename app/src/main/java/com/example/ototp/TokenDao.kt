@@ -1,6 +1,7 @@
 package com.example.ototp
 
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TokenDao {
@@ -15,4 +16,7 @@ interface TokenDao {
 
     @Query("SELECT * FROM totp_tokens")
     suspend fun getAllTokens(): List<TOTPTokenEntity>
+
+    @Query("SELECT * FROM totp_tokens WHERE id = :id")
+    fun getTokenFlow(id: Long): Flow<TOTPTokenEntity>
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,7 +17,7 @@ class MyViewModel(
     private val _tokens = MutableStateFlow<List<TOTPTokenEntity>>(emptyList())
     val tokens: StateFlow<List<TOTPTokenEntity>> = _tokens
 
-    var tokenToEdit: TOTPToken? by mutableStateOf(null)
+    var tokenDraft: TOTPToken? by mutableStateOf(null)
 
     init {
         refreshTokens()
@@ -48,6 +49,8 @@ class MyViewModel(
             refreshTokens()
         }
     }
+
+    fun getToken(tokenId: Long): Flow<TOTPTokenEntity?> = repository.getToken(tokenId)
 
     fun getSecret(tokenId: Long): String? = repository.getSecret(tokenId)
 }
