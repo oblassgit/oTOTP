@@ -9,6 +9,6 @@ data class TOTPTokenEntity(
     val label: String?,
     val issuer: String,
     val algorithm: Algorithm,
-    val digits: Int?,
-    val period: Int?
+    val digits: Int,
+    val period: Int
 )

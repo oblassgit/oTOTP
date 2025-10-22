@@ -53,8 +53,8 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
-    implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.material3)
+    implementation(libs.commons.codec)
     implementation(libs.accompanist.navigation.animation)
 
     implementation(libs.barcode.scanning)

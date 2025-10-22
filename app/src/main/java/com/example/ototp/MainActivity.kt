@@ -13,8 +13,10 @@ import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +44,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.material3.TopAppBar
@@ -194,23 +198,13 @@ fun MainScreen(
     onQRCode: () -> Unit,
     onDelete: (id: Long) -> Unit,
     onEdit: (token: TOTPTokenEntity) -> Unit,
-    totpPeriod: Long = 30L // seconds
 ) {
     val tokens by viewModel.tokens.collectAsState()
 
     // Timer state
-    var secondsLeft by remember { mutableStateOf(0L) }
-    var tick by remember { mutableStateOf(0L) }
 
     // Tick every second, update both secondsLeft and tick (for TOTP refresh)
-    LaunchedEffect(Unit) {
-        while (true) {
-            val now = System.currentTimeMillis() / 1000
-            secondsLeft = totpPeriod - (now % totpPeriod)
-            tick = now / totpPeriod
-            delay(1000)
-        }
-    }
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -218,11 +212,6 @@ fun MainScreen(
             TopAppBar(
                 title = { Text("oTOTP") },
                 actions = {
-                    /*Text(
-                        text = "Next refresh: $secondsLeft s",
-                        modifier = Modifier.padding(end = 16.dp)
-                    )*/
-                    ExpressiveLinearCountdown(secondsLeft = secondsLeft)
                 }
             )
         }
@@ -238,18 +227,29 @@ fun MainScreen(
                     .padding(bottom = 80.dp)
             ) {
                 items(tokens) { token ->
+                    var secondsLeft by remember { mutableStateOf(0L) }
+                    var tick by remember { mutableStateOf(0L) }
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            val now = System.currentTimeMillis() / 1000
+                            secondsLeft = token.period - (now % token.period)
+                            tick = now / token.period
+                            delay(1000)
+                        }
+                    }
                     val secret = viewModel.getSecret(token.id) ?: ""
                     val totp = remember(secret, tick) {
                         TOTPUtil.generateTOTPBase32(
                             secret = secret,
-                            digits = token.digits ?: 6,
-                            period = token.period ?: 30
+                            digits = token.digits,
+                            period = token.period
                         )
                     }
                     TOTPItem(
                         totp,
                         token.label,
                         token.issuer,
+                        token.period,
                         secondsLeft,
                         { onEdit(token) },
                         { onDelete(token.id) }
@@ -273,11 +273,13 @@ fun TOTPItem(
     token: String,
     account: String?,
     issuer: String,
+    totalSeconds: Int,
     secondsLeft: Long,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var confirmationDialogShown by remember { mutableStateOf(false) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
     Card(
@@ -289,44 +291,51 @@ fun TOTPItem(
                     clipboardManager.setText(AnnotatedString(token))
                 },
                 onLongClick = {
-                    expanded = true
+                    dropdownExpanded = true
                     haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                 }
             )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(16.dp).fillMaxWidth()
         ) {
+            Column(
+            ) {
 
-            Text(
-                text = issuer,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = account?:""
-            )
-            Text(
-                text = token,
-                style = MaterialTheme.typography.headlineMedium,
-                color = if (secondsLeft <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
-            )
+                Text(
+                    text = issuer,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = account?:""
+                )
+                Text(
+                    text = token,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = if (secondsLeft <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            ExpressiveCircularCountdown(totalSeconds, secondsLeft)
         }
 
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(expanded = dropdownExpanded, onDismissRequest = { dropdownExpanded = false }) {
             DropdownMenuItem(
                 text = { Text("Edit") },
                 onClick = {
                     onEdit()
-                    expanded = false
+                    dropdownExpanded = false
                           },
                 leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
             )
             DropdownMenuItem(
                 text = { Text("Delete") },
                 onClick = {
-                    onDelete()
-                    expanded = false
+                    confirmationDialogShown = true
+                    dropdownExpanded = false
                           },
                 leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
             )
@@ -334,31 +343,99 @@ fun TOTPItem(
                 text = { Text("Copy") },
                 onClick = {
                     clipboardManager.setText(AnnotatedString(token))
-                    expanded = false
+                    dropdownExpanded = false
                           },
                 leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
             )
         }
     }
+    if (confirmationDialogShown) {
+        ConfirmDeletionDialog(
+            onConfirm = {
+                onDelete()
+                confirmationDialogShown = false
+            },
+            onDismiss = {
+                confirmationDialogShown = false
+            },
+            issuer = issuer
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConfirmDeletionDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    issuer: String,
+) {
+    AlertDialog(
+        onDismissRequest = {
+            onDismiss()
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm()
+                }
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onDismiss()
+                }
+            ) {
+                Text("Cancel")
+            }
+        },
+        icon = {
+            Icon(Icons.Default.Delete, "")
+        },
+        title = {
+            Text(text = "Delete $issuer?")
+        },
+        text = {
+            Text("Without this token you might not be able to log in to your $issuer account. Do you really want to proceed?")
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ExpressiveLinearCountdown(
-    totalSeconds: Long = 30,
+fun ExpressiveCircularCountdown(
+    totalSeconds: Int = 30,
     secondsLeft: Long,
 ) {
-    val progress by animateFloatAsState(
-        targetValue = (secondsLeft / totalSeconds.toFloat()).coerceIn(0f, 1f),
-        label = "progress"
-    )
-    Box(
-        contentAlignment = Alignment.Center
-    ) {
-        CircularWavyProgressIndicator(
-            progress = { progress }
-        )
+    var smoothProgress by remember { mutableStateOf(secondsLeft / totalSeconds.toFloat()) }
 
+    LaunchedEffect(secondsLeft) {
+        val start = secondsLeft / totalSeconds.toFloat()
+        val end = (secondsLeft - 1) / totalSeconds.toFloat()
+        val duration = 1000L // ms in one second
+
+        val frameRate = 60 // 60 frames per second
+        val frameDelay = 1000L / frameRate
+
+        val startTime = System.currentTimeMillis()
+        var elapsed: Long
+
+        do {
+            elapsed = System.currentTimeMillis() - startTime
+            val fraction = (elapsed / duration.toFloat()).coerceIn(0f, 1f)
+            smoothProgress = start + (end - start) * fraction
+            delay(frameDelay)
+        } while (elapsed < duration)
+        smoothProgress = end
+    }
+
+    Box(contentAlignment = Alignment.Center) {
+        CircularWavyProgressIndicator(
+            progress = { smoothProgress.coerceIn(0f, 1f) }
+        )
         Text(secondsLeft.toString(), style = LocalTextStyle.current.copy())
     }
 }

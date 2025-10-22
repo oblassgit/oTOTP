@@ -2,11 +2,12 @@ package com.example.ototp
 
 import java.net.URLDecoder
 import android.net.Uri
+import androidx.core.net.toUri
 
 object OTPAuthParser {
     fun parse(url: String): TOTPToken? {
         try {
-            val uri = Uri.parse(url)
+            val uri = url.toUri()
             if (uri.scheme != "otpauth") return null
             if (uri.host != "totp") return null
 
@@ -28,8 +29,8 @@ object OTPAuthParser {
             val secret = uri.getQueryParameter("secret") ?: return null
             val paramIssuer = uri.getQueryParameter("issuer")
             val algorithm = uri.getQueryParameter("algorithm")
-            val digits = uri.getQueryParameter("digits")?.toIntOrNull()
-            val period = uri.getQueryParameter("period")?.toIntOrNull()
+            val digits = uri.getQueryParameter("digits")?.toIntOrNull() ?: 6 //default to 6 digits
+            val period = uri.getQueryParameter("period")?.toIntOrNull() ?: 30 //default to 30 seconds
 
             // Per spec, prefer query issuer, fallback to label issuer, else fallback to label/accountName, else "Unknown"
             val finalIssuer = paramIssuer ?: labelIssuer
@@ -56,6 +57,6 @@ data class TOTPToken(
     val secret: String,
     val issuer: String,
     val algorithm: Algorithm,
-    var digits: Int? = 6,
-    var period: Int? = 30
+    var digits: Int = 6,
+    var period: Int = 30
 )

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -226,7 +227,6 @@ fun AdvancedOptionsSection(
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
             ) {
                 content()
             }
@@ -258,10 +258,27 @@ fun TokenOptionsDropdown(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Info,
+                null,
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.outline
+            )
+            Text("Don't change anything here if it's not required by the issuer. The default settings apply to most use cases.",
+                modifier = Modifier.padding(start = 4.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline
+            )
+        }
+
         ExposedDropdownMenuBox(
             expanded = algorithmExpanded,
             onExpandedChange = { algorithmExpanded = !algorithmExpanded }
         ) {
+
             OutlinedTextField(
                 value = algorithm.toString(),
                 onValueChange = {},
