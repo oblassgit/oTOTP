@@ -1,17 +1,6 @@
-package com.example.ototp
+package com.example.ototp.compose
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.EaseIn
-import androidx.compose.animation.core.EaseOut
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,119 +52,12 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import androidx.room.Room
-import com.example.ototp.ui.theme.OTOTPTheme
+import com.example.ototp.activity.MyViewModel
+import com.example.ototp.TOTPUtil
+import com.example.ototp.db.TOTPTokenEntity
 import kotlinx.coroutines.delay
-
-class MainActivity : ComponentActivity() {
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            AppDatabase.DB_NAME
-        ).build()
-
-        val totpSecretStorage = TotpSecretStorage(context = this)
-        val dao = db.tokenDao()
-        val repository = TokenRepository(dao, totpSecretStorage)
-        val viewModel = MyViewModel(repository)
-
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            val navController = rememberNavController()
-            OTOTPTheme {
-                NavHost(
-                    navController, startDestination = "home",
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None }
-                ) {
-                    composable("home") { MainScreen(navController, viewModel) }
-                    composable(
-                        "add",
-                        enterTransition = {
-                            slideIntoContainer(
-                                animationSpec = tween(300, easing = EaseIn),
-                                towards = AnimatedContentTransitionScope.SlideDirection.Start
-                            )
-                        },
-                        exitTransition = {
-                            slideOutOfContainer(
-                                animationSpec = tween(300, easing = EaseOut),
-                                towards = AnimatedContentTransitionScope.SlideDirection.End
-                            )
-                        },
-                    ) {
-                        AddOrEditTokenScreen(null, viewModel, {
-                            viewModel.addToken(it)
-                            navController.navigateUp()
-                        }, {
-                            navController.navigateUp()
-                        })
-                    }
-                    composable(
-                        "scan",
-                        enterTransition = {
-                            slideIntoContainer(
-                                animationSpec = tween(300, easing = EaseIn),
-                                towards = AnimatedContentTransitionScope.SlideDirection.Start
-                            )
-                        },
-                        exitTransition = {
-                            slideOutOfContainer(
-                                animationSpec = tween(300, easing = EaseOut),
-                                towards = AnimatedContentTransitionScope.SlideDirection.End
-                            )
-                        },
-                    ) {
-                        QRScanner(onNavigateUp = { navController.navigateUp() }, onQrCodeScanned = {
-                            navController.navigateUp()
-                            viewModel.tokenDraft = OTPAuthParser.parse(it)
-                            navController.navigate("add")
-                        })
-                    }
-                    composable(
-                        "edit/{tokenId}",
-                        arguments = listOf(navArgument("tokenId") { type = NavType.LongType }),
-                        enterTransition = {
-                            slideIntoContainer(
-                                animationSpec = tween(300, easing = EaseIn),
-                                towards = AnimatedContentTransitionScope.SlideDirection.Start
-                            )
-                        },
-                        exitTransition = {
-                            slideOutOfContainer(
-                                animationSpec = tween(300, easing = EaseOut),
-                                towards = AnimatedContentTransitionScope.SlideDirection.End
-                            )
-                        },
-                    ) { backStackEntry ->
-                        val tokenId = backStackEntry.arguments?.getLong("tokenId")
-                        if (tokenId != null) {
-                            AddOrEditTokenScreen(tokenId = tokenId, viewModel = viewModel, onSave = {
-                                viewModel.updateToken(it)
-                                navController.navigateUp()
-                            }, onNavigateUp = {
-                                navController.navigateUp()
-                            })
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun MainScreen(navController: NavController, viewModel: MyViewModel) {
@@ -253,7 +135,7 @@ fun MainScreen(
                         secondsLeft,
                         { onEdit(token) },
                         { onDelete(token.id) }
-                        )
+                    )
                 }
             }
 
@@ -299,7 +181,9 @@ fun TOTPItem(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(16.dp).fillMaxWidth()
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
             Column(
             ) {
@@ -310,7 +194,7 @@ fun TOTPItem(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = account?:""
+                    text = account ?: ""
                 )
                 Text(
                     text = token,
@@ -328,7 +212,7 @@ fun TOTPItem(
                 onClick = {
                     onEdit()
                     dropdownExpanded = false
-                          },
+                },
                 leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
             )
             DropdownMenuItem(
@@ -336,7 +220,7 @@ fun TOTPItem(
                 onClick = {
                     confirmationDialogShown = true
                     dropdownExpanded = false
-                          },
+                },
                 leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
             )
             DropdownMenuItem(
@@ -344,7 +228,7 @@ fun TOTPItem(
                 onClick = {
                     clipboardManager.setText(AnnotatedString(token))
                     dropdownExpanded = false
-                          },
+                },
                 leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
             )
         }
@@ -490,14 +374,3 @@ fun SimpleFabMenu(
         )
     }
 }
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Preview()
-@Composable
-fun MainScreenPreview() {
-    val secrets = listOf(
-        Secret("Test", "OIJSOIFJOI")
-    )
-    //MainScreen(secrets, {}, {})
-}
-

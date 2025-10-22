@@ -1,10 +1,13 @@
-package com.example.ototp
+package com.example.ototp.activity
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ototp.TOTPToken
+import com.example.ototp.db.TOTPTokenEntity
+import com.example.ototp.model.TokenRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

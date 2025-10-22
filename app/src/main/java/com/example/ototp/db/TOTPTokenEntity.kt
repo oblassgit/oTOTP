@@ -1,7 +1,8 @@
-package com.example.ototp
+package com.example.ototp.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.ototp.Algorithm
 
 @Entity(tableName = "totp_tokens")
 data class TOTPTokenEntity(

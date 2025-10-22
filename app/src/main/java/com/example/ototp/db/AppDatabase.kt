@@ -1,4 +1,4 @@
-package com.example.ototp
+package com.example.ototp.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

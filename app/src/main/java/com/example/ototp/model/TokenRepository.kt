@@ -1,5 +1,8 @@
-package com.example.ototp
+package com.example.ototp.model
 
+import com.example.ototp.TOTPToken
+import com.example.ototp.db.TOTPTokenEntity
+import com.example.ototp.db.TokenDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext

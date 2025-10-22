@@ -1,15 +1,18 @@
-package com.example.ototp
+package com.example.ototp.compose
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -18,18 +21,37 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import com.example.ototp.ui.theme.OTOTPTheme
+import com.example.ototp.Algorithm
+import com.example.ototp.activity.MyViewModel
+import com.example.ototp.TOTPToken
+import com.example.ototp.TOTPUtil
+import com.example.ototp.db.TOTPTokenEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,31 +81,43 @@ fun AddOrEditTokenScreen(
     val isEditMode = tokenId != null
 
     // 4. Initialize state from entity (edit), draft (add w/ QR), or empty (manual add)
-    var account by rememberSaveable { mutableStateOf(
-        draft?.account ?: entity?.label ?: ""
-    )}
-    var issuer by rememberSaveable { mutableStateOf(
-        draft?.issuer ?: entity?.issuer ?: ""
-    )}
-    var algorithm by rememberSaveable { mutableStateOf(
-        draft?.algorithm ?: entity?.algorithm ?: Algorithm.SHA1
-    )}
-    var digits by rememberSaveable { mutableStateOf(
-        draft?.digits ?: entity?.digits ?: 6
-    )}
-    var period by rememberSaveable { mutableStateOf(
-        draft?.period ?: entity?.period ?: 30
-    )}
-    var secretField by rememberSaveable { mutableStateOf(
-        draft?.secret ?: secret
-    )}
+    var account by rememberSaveable {
+        mutableStateOf(
+            draft?.account ?: entity?.label ?: ""
+        )
+    }
+    var issuer by rememberSaveable {
+        mutableStateOf(
+            draft?.issuer ?: entity?.issuer ?: ""
+        )
+    }
+    var algorithm by rememberSaveable {
+        mutableStateOf(
+            draft?.algorithm ?: entity?.algorithm ?: Algorithm.SHA1
+        )
+    }
+    var digits by rememberSaveable {
+        mutableStateOf(
+            draft?.digits ?: entity?.digits ?: 6
+        )
+    }
+    var period by rememberSaveable {
+        mutableStateOf(
+            draft?.period ?: entity?.period ?: 30
+        )
+    }
+    var secretField by rememberSaveable {
+        mutableStateOf(
+            draft?.secret ?: secret
+        )
+    }
     var secretVisibility by rememberSaveable { mutableStateOf(false) }
 
     // 5. When entity or secret changes (edit mode), update fields if not already set
     LaunchedEffect(entity, secret) {
         if (isEditMode) {
             entity?.let { entity ->
-                account = entity.label?: ""
+                account = entity.label ?: ""
                 issuer = entity.issuer
                 algorithm = entity.algorithm
                 digits = entity.digits ?: 6
@@ -162,7 +196,10 @@ fun AddOrEditTokenScreen(
                         visualTransformation = if (!secretVisibility) PasswordVisualTransformation() else VisualTransformation.None,
                         trailingIcon = {
                             IconButton(onClick = { secretVisibility = !secretVisibility }) {
-                                if (secretVisibility) Icon(Icons.Default.VisibilityOff, "Hide") else Icon(Icons.Default.Visibility, "Show")
+                                if (secretVisibility) Icon(
+                                    Icons.Default.VisibilityOff,
+                                    "Hide"
+                                ) else Icon(Icons.Default.Visibility, "Show")
                             }
                         }
                     )
@@ -262,12 +299,14 @@ fun TokenOptionsDropdown(
             verticalAlignment = Alignment.Top,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Default.Info,
+            Icon(
+                Icons.Default.Info,
                 null,
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.outline
             )
-            Text("Don't change anything here if it's not required by the issuer. The default settings apply to most use cases.",
+            Text(
+                "Don't change anything here if it's not required by the issuer. The default settings apply to most use cases.",
                 modifier = Modifier.padding(start = 4.dp),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.outline
@@ -285,7 +324,9 @@ fun TokenOptionsDropdown(
                 readOnly = true,
                 label = { Text("Algorithm") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = algorithmExpanded) },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth()
             )
             ExposedDropdownMenu(
                 expanded = algorithmExpanded,
@@ -314,7 +355,9 @@ fun TokenOptionsDropdown(
                 readOnly = true,
                 label = { Text("Digits") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = digitsExpanded) },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth()
             )
             ExposedDropdownMenu(
                 expanded = digitsExpanded,
@@ -343,7 +386,9 @@ fun TokenOptionsDropdown(
                 readOnly = true,
                 label = { Text("Period (seconds)") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = periodExpanded) },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth()
             )
             ExposedDropdownMenu(
                 expanded = periodExpanded,

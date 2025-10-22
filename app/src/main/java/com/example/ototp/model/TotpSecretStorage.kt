@@ -1,4 +1,4 @@
-package com.example.ototp
+package com.example.ototp.model
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
