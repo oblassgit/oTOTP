@@ -5,7 +5,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -51,11 +54,12 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.ototp.activity.MyViewModel
 import com.example.ototp.TOTPUtil
+import com.example.ototp.activity.MyViewModel
 import com.example.ototp.db.TOTPTokenEntity
 import kotlinx.coroutines.delay
 
@@ -83,71 +87,65 @@ fun MainScreen(
 ) {
     val tokens by viewModel.tokens.collectAsState()
 
-    // Timer state
-
-    // Tick every second, update both secondsLeft and tick (for TOTP refresh)
-
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("oTOTP") },
-                actions = {
-                }
+                title = { Text("oTOTP") }
             )
-        }
-    ) { innerPadding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 80.dp)
-            ) {
-                items(tokens) { token ->
-                    var secondsLeft by remember { mutableStateOf(0L) }
-                    var tick by remember { mutableStateOf(0L) }
-                    LaunchedEffect(Unit) {
-                        while (true) {
-                            val now = System.currentTimeMillis() / 1000
-                            secondsLeft = token.period - (now % token.period)
-                            tick = now / token.period
-                            delay(1000)
-                        }
-                    }
-                    val secret = viewModel.getSecret(token.id) ?: ""
-                    val totp = remember(secret, tick) {
-                        TOTPUtil.generateTOTPBase32(
-                            secret = secret,
-                            digits = token.digits,
-                            period = token.period
-                        )
-                    }
-                    TOTPItem(
-                        totp,
-                        token.label,
-                        token.issuer,
-                        token.period,
-                        secondsLeft,
-                        { onEdit(token) },
-                        { onDelete(token.id) }
-                    )
-                }
-            }
-
+        },
+        floatingActionButton = {
             SimpleFabMenu(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(12.dp),
+                modifier = Modifier,
                 onManual = { onManual() },
                 onQRCode = { onQRCode() }
             )
         }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = innerPadding.calculateTopPadding(),
+                start = innerPadding.calculateStartPadding(
+                    LocalLayoutDirection.current
+                ),
+                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                bottom = innerPadding.calculateBottomPadding() + 126.dp
+            )
+        ) {
+            items(tokens) { token ->
+                var secondsLeft by remember { mutableStateOf(0L) }
+                var tick by remember { mutableStateOf(0L) }
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        val now = System.currentTimeMillis() / 1000
+                        secondsLeft = token.period - (now % token.period)
+                        tick = now / token.period
+                        delay(1000)
+                    }
+                }
+                val secret = viewModel.getSecret(token.id) ?: ""
+                val totp = remember(secret, tick) {
+                    TOTPUtil.generateTOTPBase32(
+                        secret = secret,
+                        digits = token.digits,
+                        period = token.period
+                    )
+                }
+                TOTPItem(
+                    totp,
+                    token.label,
+                    token.issuer,
+                    token.period,
+                    secondsLeft,
+                    { onEdit(token) },
+                    { onDelete(token.id) }
+                )
+            }
+        }
     }
+
 }
 
 @Composable
@@ -327,9 +325,9 @@ fun ExpressiveCircularCountdown(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SimpleFabMenu(
+    modifier: Modifier = Modifier,
     onQRCode: () -> Unit = {},
     onManual: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     var fabMenuExpanded by remember { mutableStateOf(false) }
 

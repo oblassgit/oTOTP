@@ -1,6 +1,7 @@
 package com.example.ototp.activity
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,21 +17,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.Room
+import com.example.ototp.TOTPUtil
 import com.example.ototp.compose.AddOrEditTokenScreen
 import com.example.ototp.compose.MainScreen
-import com.example.ototp.activity.MyViewModel
-import com.example.ototp.TOTPUtil
 import com.example.ototp.compose.QRScanner
+import com.example.ototp.db.AppDatabase
 import com.example.ototp.model.TokenRepository
 import com.example.ototp.model.TotpSecretStorage
-import com.example.ototp.db.AppDatabase
 import com.example.ototp.ui.theme.OTOTPTheme
 
 class MainActivity : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
         val db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,

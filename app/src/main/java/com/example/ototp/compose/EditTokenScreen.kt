@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -120,8 +122,8 @@ fun AddOrEditTokenScreen(
                 account = entity.label ?: ""
                 issuer = entity.issuer
                 algorithm = entity.algorithm
-                digits = entity.digits ?: 6
-                period = entity.period ?: 30
+                digits = entity.digits
+                period = entity.period
                 secretField = secret
             }
         }
@@ -167,8 +169,8 @@ fun AddOrEditTokenScreen(
             Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(12.dp)
         ) {
+            val scrollState = rememberScrollState()
             if (isEditMode && entity == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -177,6 +179,7 @@ fun AddOrEditTokenScreen(
                 Column(
                     modifier = modifier
                         .fillMaxWidth()
+                        .verticalScroll(scrollState)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
