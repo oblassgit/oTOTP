@@ -10,10 +10,11 @@ oTOTP is an Android application that provides a secure and user-friendly way to 
 - **Customizable**: Easily extendable to support additional features.
 
 ## Screenshots
-![Screenshot_20251114_141752.png](../../Documents/Android%20Screenshots/Screenshot_20251114_141752.png)
-![Screenshot_20251114_141953.png](../../Documents/Android%20Screenshots/Screenshot_20251114_141953.png)
-![Screenshot_20251114_141958.png](../../Documents/Android%20Screenshots/Screenshot_20251114_141958.png)
-![Screenshot_20251114_142013.png](../../Documents/Android%20Screenshots/Screenshot_20251114_142013.png)
+<img height="500" alt="Screenshot_20251114_141953" src="https://github.com/user-attachments/assets/0809f92f-45ec-49f7-886a-3167f38208ce" />
+<img height="500" alt="Screenshot_20251114_143525" src="https://github.com/user-attachments/assets/47ba5e8b-a736-4ee7-afbe-19d6172b87b4" />
+<img height="500" alt="Screenshot_20251114_142013" src="https://github.com/user-attachments/assets/c9157a04-5b07-4b24-917c-3c1e111cfbfc" />
+<img height="500" alt="Screenshot_20251114_141752" src="https://github.com/user-attachments/assets/ae690a9f-40ab-41b7-9c49-276f685d9f0b" />
+
 
 ## Requirements
 
