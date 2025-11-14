@@ -184,9 +184,9 @@ fun AddOrEditTokenScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     OutlinedTextField(
-                        value = account,
-                        onValueChange = { account = it },
-                        label = { Text("Account") },
+                        value = issuer,
+                        onValueChange = { issuer = it },
+                        label = { Text("Issuer") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -207,9 +207,9 @@ fun AddOrEditTokenScreen(
                         }
                     )
                     OutlinedTextField(
-                        value = issuer,
-                        onValueChange = { issuer = it },
-                        label = { Text("Issuer (optional)") },
+                        value = account,
+                        onValueChange = { account = it },
+                        label = { Text("Account (optional)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
