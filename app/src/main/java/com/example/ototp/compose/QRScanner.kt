@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -46,7 +45,6 @@ fun QRScanner(
     onQrCodeScanned: (String) -> Unit,
     onNavigateUp: () -> Unit
 ) {
-    val context = LocalContext.current
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
 
     LaunchedEffect(Unit) {
@@ -73,7 +71,6 @@ fun CameraPreviewWithAnalyzer(
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val analyzer = rememberUpdatedState(onQrCodeScanned)
     var alreadyScanned by remember { mutableStateOf(false) }
 
@@ -95,7 +92,6 @@ fun CameraPreviewWithAnalyzer(
         }
     ) { innerPadding ->
 
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -110,7 +106,7 @@ fun CameraPreviewWithAnalyzer(
                         val cameraProvider = cameraProviderFuture.get()
                         val preview = Preview.Builder()
                             .build()
-                            .also { it.setSurfaceProvider(previewView.surfaceProvider) }
+                            .also { it.surfaceProvider = previewView.surfaceProvider }
 
                         val barcodeScanner = BarcodeScanning.getClient()
                         val imageAnalyzer = ImageAnalysis.Builder()

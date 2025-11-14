@@ -31,8 +31,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -45,6 +45,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -115,8 +117,8 @@ fun MainScreen(
             )
         ) {
             items(tokens) { token ->
-                var secondsLeft by remember { mutableStateOf(0L) }
-                var tick by remember { mutableStateOf(0L) }
+                var secondsLeft by remember { mutableLongStateOf(0L) }
+                var tick by remember { mutableLongStateOf(0L) }
                 LaunchedEffect(Unit) {
                     while (true) {
                         val now = System.currentTimeMillis() / 1000
@@ -197,7 +199,7 @@ fun TOTPItem(
                 Text(
                     text = token,
                     style = MaterialTheme.typography.headlineMedium,
-                    color = if (secondsLeft <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                    color = if (secondsLeft <= WARNING_SECONDS_COUNT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -221,6 +223,7 @@ fun TOTPItem(
                 },
                 leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
             )
+            HorizontalDivider()
             DropdownMenuItem(
                 text = { Text("Copy") },
                 onClick = {
@@ -292,7 +295,7 @@ fun ExpressiveCircularCountdown(
     totalSeconds: Int = 30,
     secondsLeft: Long,
 ) {
-    var smoothProgress by remember { mutableStateOf(secondsLeft / totalSeconds.toFloat()) }
+    var smoothProgress by remember { mutableFloatStateOf(secondsLeft / totalSeconds.toFloat()) }
 
     LaunchedEffect(secondsLeft) {
         val start = secondsLeft / totalSeconds.toFloat()
@@ -313,12 +316,15 @@ fun ExpressiveCircularCountdown(
         } while (elapsed < duration)
         smoothProgress = end
     }
-
     Box(contentAlignment = Alignment.Center) {
         CircularWavyProgressIndicator(
-            progress = { smoothProgress.coerceIn(0f, 1f) }
+            progress = { smoothProgress.coerceIn(0f, 1f) },
+            color = if (secondsLeft <= WARNING_SECONDS_COUNT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
         )
-        Text(secondsLeft.toString(), style = LocalTextStyle.current.copy())
+        Text(
+            text = secondsLeft.toString(),
+            color = if (secondsLeft <= WARNING_SECONDS_COUNT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+        )
     }
 }
 
@@ -372,3 +378,5 @@ fun SimpleFabMenu(
         )
     }
 }
+
+private const val WARNING_SECONDS_COUNT = 5
