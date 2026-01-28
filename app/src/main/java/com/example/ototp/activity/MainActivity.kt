@@ -1,7 +1,6 @@
 package com.example.ototp.activity
 
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -30,14 +29,10 @@ class MainActivity : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
         val db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
-            AppDatabase.Companion.DB_NAME
+            AppDatabase.DB_NAME
         ).build()
 
         val totpSecretStorage = TotpSecretStorage(context = this)
@@ -52,8 +47,8 @@ class MainActivity : ComponentActivity() {
             OTOTPTheme {
                 NavHost(
                     navController, startDestination = "home",
-                    enterTransition = { EnterTransition.Companion.None },
-                    exitTransition = { ExitTransition.Companion.None }
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None }
                 ) {
                     composable("home") { MainScreen(navController, viewModel) }
                     composable(
@@ -102,7 +97,7 @@ class MainActivity : ComponentActivity() {
                     composable(
                         "edit/{tokenId}",
                         arguments = listOf(navArgument("tokenId") {
-                            type = NavType.Companion.LongType
+                            type = NavType.LongType
                         }),
                         enterTransition = {
                             slideIntoContainer(
