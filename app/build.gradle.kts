@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.commons.codec)
     implementation(libs.accompanist.navigation.animation)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.barcode.scanning)
     implementation(libs.androidx.camera.camera2)

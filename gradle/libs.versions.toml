@@ -20,6 +20,7 @@ securityCrypto = "1.1.0"
 material3 = "1.5.0-alpha04"
 roomCommonJvm = "2.8.1"
 roomKtx = "2.8.1"
+datastorePreferences = "1.1.1"
 
 [libraries]
 accompanist-navigation-animation = { module = "com.google.accompanist:accompanist-navigation-animation", version.ref = "accompanistNavigationAnimation" }
@@ -34,6 +35,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCrypto" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commonsCodec" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
