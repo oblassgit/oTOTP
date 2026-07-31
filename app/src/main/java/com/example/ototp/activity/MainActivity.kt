@@ -28,6 +28,9 @@ import com.example.ototp.model.TotpSecretStorage
 import com.example.ototp.settings.SettingsScreen
 import com.example.ototp.settings.SettingsViewModel
 import com.example.ototp.settings.ThemePreferences
+import com.example.ototp.`import`.ImportSourcePickerScreen
+import com.example.ototp.`import`.ImportTokensReviewScreen
+import com.example.ototp.`import`.ImportViewModel
 import com.example.ototp.ui.theme.OTOTPTheme
 
 class MainActivity : ComponentActivity() {
@@ -44,6 +47,7 @@ class MainActivity : ComponentActivity() {
         val repository = TokenRepository(dao, totpSecretStorage)
         val viewModel = MyViewModel(repository)
         val settingsViewModel = SettingsViewModel(this)
+        val importViewModel = ImportViewModel(repository)
         val themePreferences = ThemePreferences(this)
 
         super.onCreate(savedInstanceState)
@@ -66,7 +70,30 @@ class MainActivity : ComponentActivity() {
                     composable("settings") {
                         SettingsScreen(
                             viewModel = settingsViewModel,
-                            onNavigateBack = { navController.navigateUp() }
+                            onNavigateBack = { navController.navigateUp() },
+                            onNavigateToImport = { navController.navigate("import") }
+                        )
+                    }
+                    composable("import") {
+                        ImportSourcePickerScreen(
+                            viewModel = importViewModel,
+                            onNavigateBack = { navController.navigateUp() },
+                            onTokensParsed = { navController.navigate("import/review") }
+                        )
+                    }
+                    composable("import/review") {
+                        ImportTokensReviewScreen(
+                            viewModel = importViewModel,
+                            onNavigateBack = {
+                                importViewModel.handleAction(com.example.ototp.`import`.Import.Action.Reset)
+                                navController.navigateUp()
+                            },
+                            onImportSuccess = {
+                                viewModel.refreshTokens()
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
+                                }
+                            }
                         )
                     }
                     composable(

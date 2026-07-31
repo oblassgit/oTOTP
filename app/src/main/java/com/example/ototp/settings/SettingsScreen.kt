@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -24,13 +25,15 @@ import com.example.ototp.ui.theme.OTOTPTheme
 @Composable
 internal fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToImport: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
     SettingsScreen(
         state = state,
         onNavigateBack = onNavigateBack,
+        onNavigateToImport = onNavigateToImport,
         onAction = {
             viewModel.handleAction(it)
         }
@@ -42,6 +45,7 @@ internal fun SettingsScreen(
 internal fun SettingsScreen(
     state: Settings.State,
     onNavigateBack: () -> Unit = {},
+    onNavigateToImport: () -> Unit = {},
     onAction: (Settings.Action) -> Unit
 ) {
 
@@ -97,6 +101,14 @@ internal fun SettingsScreen(
                     is Settings.SettingsItem.SubHeading -> {
                         SettingsSubHeading(item.text)
                     }
+                    is Settings.SettingsItem.ImportTokens -> {
+                        SettingsClickableItem(
+                            title = "Import Tokens",
+                            icon = Icons.Default.Download,
+                            summary = "Import tokens from another authenticator app",
+                            onClick = onNavigateToImport
+                        )
+                    }
                     else -> {
                         // Handle other settings items if needed
                     }
@@ -113,6 +125,7 @@ fun SettingsScreenPreview() {
         SettingsScreen(
             state = Settings.State(),
             onNavigateBack = {},
+            onNavigateToImport = {},
             onAction = {},
         )
     }

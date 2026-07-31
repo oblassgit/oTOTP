@@ -48,6 +48,8 @@ internal class SettingsViewModel(context: Context): ViewModel() {
     private fun buildSettingsItems(themeMode: Settings.ThemeMode, dynamicColorsEnabled: Boolean): List<Settings.SettingsItem> {
         val items = mutableListOf<Settings.SettingsItem>()
 
+        items.add(Settings.SettingsItem.SubHeading("Data"))
+        items.add(Settings.SettingsItem.ImportTokens)
         items.add(Settings.SettingsItem.SubHeading("Appearance"))
 
         // Add theme mode selector

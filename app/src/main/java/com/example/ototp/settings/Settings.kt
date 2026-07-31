@@ -36,6 +36,8 @@ internal interface Settings {
 
         internal data class ThemeMode(val currentMode: Settings.ThemeMode): SettingsItem()
 
+        internal data object ImportTokens : SettingsItem()
+
         internal sealed interface SettingsSwitchableItem {
             val isEnabled: Boolean
         }
