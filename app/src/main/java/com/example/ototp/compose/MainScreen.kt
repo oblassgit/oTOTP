@@ -22,7 +22,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -33,6 +35,7 @@ import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -75,6 +78,9 @@ fun MainScreen(navController: NavController, viewModel: MyViewModel) {
         onEdit = {
             navController.navigate("edit/${it.id}")
         },
+        onSettings = {
+            navController.navigate("settings")
+        },
     )
 }
 
@@ -86,6 +92,7 @@ fun MainScreen(
     onQRCode: () -> Unit,
     onDelete: (id: Long) -> Unit,
     onEdit: (token: TOTPTokenEntity) -> Unit,
+    onSettings: () -> Unit,
 ) {
     val tokens by viewModel.tokens.collectAsState()
 
@@ -93,7 +100,12 @@ fun MainScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("oTOTP") }
+                title = { Text("oTOTP") },
+                actions = {
+                    IconButton(onClick = { onSettings() }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -263,7 +275,9 @@ fun ConfirmDeletionDialog(
             TextButton(
                 onClick = {
                     onConfirm()
-                }
+                }, colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
             ) {
                 Text("Delete")
             }

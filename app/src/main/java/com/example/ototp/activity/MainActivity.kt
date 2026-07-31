@@ -10,6 +10,8 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,10 +25,12 @@ import com.example.ototp.compose.QRScanner
 import com.example.ototp.db.AppDatabase
 import com.example.ototp.model.TokenRepository
 import com.example.ototp.model.TotpSecretStorage
+import com.example.ototp.settings.SettingsScreen
+import com.example.ototp.settings.SettingsViewModel
+import com.example.ototp.settings.ThemePreferences
 import com.example.ototp.ui.theme.OTOTPTheme
 
 class MainActivity : ComponentActivity() {
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val db = Room.databaseBuilder(
@@ -39,18 +43,32 @@ class MainActivity : ComponentActivity() {
         val dao = db.tokenDao()
         val repository = TokenRepository(dao, totpSecretStorage)
         val viewModel = MyViewModel(repository)
+        val settingsViewModel = SettingsViewModel(this)
+        val themePreferences = ThemePreferences(this)
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val navController = rememberNavController()
-            OTOTPTheme {
+            val themeMode by themePreferences.themeMode.collectAsState(com.example.ototp.settings.Settings.ThemeMode.SYSTEM)
+            val dynamicColors by themePreferences.dynamicColorsEnabled.collectAsState(true)
+
+            OTOTPTheme(
+                themeMode = themeMode,
+                dynamicColor = dynamicColors
+            ) {
+                val navController = rememberNavController()
                 NavHost(
                     navController, startDestination = "home",
                     enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None }
                 ) {
                     composable("home") { MainScreen(navController, viewModel) }
+                    composable("settings") {
+                        SettingsScreen(
+                            viewModel = settingsViewModel,
+                            onNavigateBack = { navController.navigateUp() }
+                        )
+                    }
                     composable(
                         "add",
                         enterTransition = {
