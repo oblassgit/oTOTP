@@ -78,7 +78,20 @@ class MainActivity : ComponentActivity() {
                         ImportSourcePickerScreen(
                             viewModel = importViewModel,
                             onNavigateBack = { navController.navigateUp() },
-                            onTokensParsed = { navController.navigate("import/review") }
+                            onTokensParsed = { navController.navigate("import/review") },
+                            onScanGoogleAuth = { navController.navigate("import/scan") }
+                        )
+                    }
+                    composable("import/scan") {
+                        QRScanner(
+                            onNavigateUp = { navController.navigateUp() },
+                            onQrCodeScanned = { data ->
+                                navController.navigateUp()
+                                importViewModel.handleAction(
+                                    com.example.ototp.`import`.Import.Action.ParseGoogleAuthQR(data)
+                                )
+                                navController.navigate("import/review")
+                            }
                         )
                     }
                     composable("import/review") {

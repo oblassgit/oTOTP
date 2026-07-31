@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -49,7 +50,8 @@ import com.example.ototp.R
 internal fun ImportSourcePickerScreen(
     viewModel: ImportViewModel,
     onNavigateBack: () -> Unit,
-    onTokensParsed: () -> Unit
+    onTokensParsed: () -> Unit,
+    onScanGoogleAuth: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -96,7 +98,8 @@ internal fun ImportSourcePickerScreen(
                     modifier = Modifier.padding(innerPadding),
                     onSelectTwoFas = {
                         filePicker.launch(arrayOf("application/*"))
-                    }
+                    },
+                    onSelectGoogleAuth = onScanGoogleAuth
                 )
             }
             is Import.State.Loading -> {
@@ -129,12 +132,6 @@ internal fun ImportTokensReviewScreen(
     onImportSuccess: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-
-    LaunchedEffect(state) {
-        if (state is Import.State.Success) {
-            onImportSuccess()
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -186,7 +183,8 @@ internal fun ImportTokensReviewScreen(
 @Composable
 private fun ImportSourceList(
     modifier: Modifier = Modifier,
-    onSelectTwoFas: () -> Unit
+    onSelectTwoFas: () -> Unit,
+    onSelectGoogleAuth: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -223,6 +221,35 @@ private fun ImportSourceList(
                     )
                     Text(
                         text = "Import from a 2FAS backup file (.2fas) \nSettings > 2FAS Backup > Export",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        OutlinedCard(
+            onClick = onSelectGoogleAuth,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.import_service_google),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp)
+                )
+                Column {
+                    Text(
+                        text = "Google Authenticator",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "Scan the export QR code\nTransfer accounts > Export accounts",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

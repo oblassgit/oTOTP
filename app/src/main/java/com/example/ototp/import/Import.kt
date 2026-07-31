@@ -19,6 +19,7 @@ internal interface Import {
 
     sealed interface Action {
         data class ParseFile(val inputStream: java.io.InputStream) : Action
+        data class ParseGoogleAuthQR(val data: String) : Action
         data class ToggleToken(val index: Int) : Action
         data object SelectAll : Action
         data object DeselectAll : Action

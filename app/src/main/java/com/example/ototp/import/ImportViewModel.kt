@@ -17,6 +17,7 @@ internal class ImportViewModel(private val repository: TokenRepository) : ViewMo
     fun handleAction(action: Import.Action) {
         when (action) {
             is Import.Action.ParseFile -> parseTwoFasFile(action.inputStream)
+            is Import.Action.ParseGoogleAuthQR -> parseGoogleAuthQR(action.data)
             is Import.Action.ToggleToken -> toggleToken(action.index)
             is Import.Action.SelectAll -> setAllSelected(true)
             is Import.Action.DeselectAll -> setAllSelected(false)
@@ -40,6 +41,24 @@ internal class ImportViewModel(private val repository: TokenRepository) : ViewMo
                 }
             } catch (e: Exception) {
                 _state.value = Import.State.Error(e.message ?: "Failed to parse the backup file.")
+            }
+        }
+    }
+
+    private fun parseGoogleAuthQR(data: String) {
+        _state.value = Import.State.Loading
+        viewModelScope.launch {
+            try {
+                val tokens = withContext(Dispatchers.IO) {
+                    GoogleAuthImporter.parse(data)
+                }
+                _state.value = if (tokens.isEmpty()) {
+                    Import.State.Error("No TOTP tokens found in the scanned QR code.")
+                } else {
+                    Import.State.TokensReady(tokens.map { Import.SelectableToken(it) })
+                }
+            } catch (e: Exception) {
+                _state.value = Import.State.Error(e.message ?: "Failed to parse the Google Authenticator QR code.")
             }
         }
     }
