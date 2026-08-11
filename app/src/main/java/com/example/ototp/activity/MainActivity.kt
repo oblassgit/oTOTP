@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.material3.Surface
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.tween
@@ -60,7 +61,8 @@ class MainActivity : ComponentActivity() {
                 themeMode = themeMode,
                 dynamicColor = dynamicColors
             ) {
-                val navController = rememberNavController()
+                Surface {
+                    val navController = rememberNavController()
                 NavHost(
                     navController, startDestination = "home",
                     enterTransition = { fadeIn() },
@@ -185,6 +187,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                } // Surface
             }
         }
     }

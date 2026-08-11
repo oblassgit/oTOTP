@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Password
 import androidx.compose.material.icons.rounded.QrCode
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,6 +41,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.material3.TopAppBar
@@ -55,6 +58,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -94,16 +100,56 @@ fun MainScreen(
     onEdit: (token: TOTPTokenEntity) -> Unit,
     onSettings: () -> Unit,
 ) {
-    val tokens by viewModel.tokens.collectAsState()
+    val tokens by viewModel.filteredTokens.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    var searchActive by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    fun closeSearch() {
+        searchActive = false
+        viewModel.setSearchQuery("")
+    }
+
+    BackHandler(enabled = searchActive) { closeSearch() }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("oTOTP") },
+                title = {
+                    if (searchActive) {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.setSearchQuery(it) },
+                            placeholder = { Text("Search tokens…") },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            )
+                        )
+                        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+                    } else {
+                        Text("oTOTP")
+                    }
+                },
                 actions = {
-                    IconButton(onClick = { onSettings() }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    if (searchActive) {
+                        IconButton(onClick = { closeSearch() }) {
+                            Icon(Icons.Rounded.Close, contentDescription = "Close search")
+                        }
+                    } else {
+                        IconButton(onClick = { searchActive = true }) {
+                            Icon(Icons.Rounded.Search, contentDescription = "Search")
+                        }
+                        IconButton(onClick = { onSettings() }) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        }
                     }
                 }
             )
