@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Brightness4
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.rounded.Brightness4
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -153,7 +153,7 @@ internal fun SettingsThemeModeSelector(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Icon(
-            imageVector = Icons.Default.Brightness4,
+            imageVector = Icons.Rounded.Brightness4,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -252,7 +252,7 @@ fun SettingsComponentsPreview() {
                 SettingsToggleItem(
                     title = "Enable Notifications",
                     summary = "Receive alerts for important updates",
-                    icon = Icons.Default.Notifications,
+                    icon = Icons.Rounded.Notifications,
                     checked = toggle1,
                     onCheckedChange = { toggle1 = it }
                 )
@@ -265,7 +265,7 @@ fun SettingsComponentsPreview() {
                 SettingsToggleItem(
                     title = "Dynamic Colors",
                     summary = "Use system wallpaper colors",
-                    icon = Icons.Default.Palette,
+                    icon = Icons.Rounded.Palette,
                     checked = dynamicColors,
                     onCheckedChange = { dynamicColors = it }
                 )
@@ -279,7 +279,7 @@ fun SettingsComponentsPreview() {
                 SettingsClickableItem(
                     title = "Advanced Settings",
                     summary = "Configure advanced options",
-                    icon = Icons.Default.Settings,
+                    icon = Icons.Rounded.Settings,
                     onClick = {}
                 )
 
@@ -290,7 +290,7 @@ fun SettingsComponentsPreview() {
 
                 SettingsItem(
                     title = "Simple Item",
-                    icon = Icons.Default.Security,
+                    icon = Icons.Rounded.Security,
                     summary = "This is a basic settings item"
                 )
 

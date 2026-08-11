@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.ototp.ui.theme.OTOTPTheme
 
@@ -85,7 +84,7 @@ internal fun SettingsScreen(
                     is Settings.SettingsItem.DynamicColors -> {
                         SettingsToggleItem(
                             title = "Dynamic Colors",
-                            icon = Icons.Default.ColorLens,
+                            icon = Icons.Rounded.Palette,
                             summary = "Use system wallpaper colors (Android 12+)",
                             checked = item.isEnabled,
                             onCheckedChange = { enabled ->
@@ -104,7 +103,7 @@ internal fun SettingsScreen(
                     is Settings.SettingsItem.ImportTokens -> {
                         SettingsClickableItem(
                             title = "Import Tokens",
-                            icon = Icons.Default.Download,
+                            icon = Icons.Rounded.Download,
                             summary = "Import tokens from another authenticator app",
                             onClick = onNavigateToImport
                         )
@@ -123,7 +122,14 @@ internal fun SettingsScreen(
 fun SettingsScreenPreview() {
     OTOTPTheme {
         SettingsScreen(
-            state = Settings.State(),
+            state = Settings.State(
+                settingsItems = listOf(
+                    Settings.SettingsItem.ThemeMode(currentMode = Settings.ThemeMode.LIGHT),
+                    Settings.SettingsItem.DynamicColors(isEnabled = true),
+                    Settings.SettingsItem.SubHeading(text = "Import/Export"),
+                    Settings.SettingsItem.ImportTokens
+                )
+            ),
             onNavigateBack = {},
             onNavigateToImport = {},
             onAction = {},

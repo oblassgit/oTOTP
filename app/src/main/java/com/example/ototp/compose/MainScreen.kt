@@ -15,14 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Password
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Password
+import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -225,7 +225,7 @@ fun TOTPItem(
                     onEdit()
                     dropdownExpanded = false
                 },
-                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
             )
             DropdownMenuItem(
                 text = { Text("Delete") },
@@ -233,7 +233,7 @@ fun TOTPItem(
                     confirmationDialogShown = true
                     dropdownExpanded = false
                 },
-                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
             )
             HorizontalDivider()
             DropdownMenuItem(
@@ -242,7 +242,7 @@ fun TOTPItem(
                     clipboardManager.setText(AnnotatedString(token))
                     dropdownExpanded = false
                 },
-                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Rounded.ContentCopy, contentDescription = null) },
             )
         }
     }
@@ -292,7 +292,7 @@ fun ConfirmDeletionDialog(
             }
         },
         icon = {
-            Icon(Icons.Default.Delete, "")
+            Icon(Icons.Rounded.Delete, "")
         },
         title = {
             Text(text = "Delete $issuer?")
@@ -363,7 +363,7 @@ fun SimpleFabMenu(
             ) {
                 val imageVector by remember {
                     derivedStateOf {
-                        if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
+                        if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
                     }
                 }
                 Icon(
@@ -379,7 +379,7 @@ fun SimpleFabMenu(
                 fabMenuExpanded = false
                 onQRCode()
             },
-            icon = { Icon(Icons.Filled.QrCode, contentDescription = null) },
+            icon = { Icon(Icons.Rounded.QrCode, contentDescription = null) },
             text = { Text("Scan QR Code") }
         )
         FloatingActionButtonMenuItem(
@@ -387,7 +387,7 @@ fun SimpleFabMenu(
                 fabMenuExpanded = false
                 onManual()
             },
-            icon = { Icon(Icons.Filled.Password, contentDescription = null) },
+            icon = { Icon(Icons.Rounded.Password, contentDescription = null) },
             text = { Text("Enter manually") }
         )
     }
