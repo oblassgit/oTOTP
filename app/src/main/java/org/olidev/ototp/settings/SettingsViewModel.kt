@@ -50,6 +50,7 @@ internal class SettingsViewModel(context: Context): ViewModel() {
 
         items.add(Settings.SettingsItem.SubHeading("Data"))
         items.add(Settings.SettingsItem.ImportTokens)
+        items.add(Settings.SettingsItem.ExportTokens)
         items.add(Settings.SettingsItem.SubHeading("Appearance"))
 
         // Add theme mode selector

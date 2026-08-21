@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -25,7 +26,8 @@ import org.olidev.ototp.ui.theme.OTOTPTheme
 internal fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit = {},
-    onNavigateToImport: () -> Unit = {}
+    onNavigateToImport: () -> Unit = {},
+    onNavigateToExport: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -33,6 +35,7 @@ internal fun SettingsScreen(
         state = state,
         onNavigateBack = onNavigateBack,
         onNavigateToImport = onNavigateToImport,
+        onNavigateToExport = onNavigateToExport,
         onAction = {
             viewModel.handleAction(it)
         }
@@ -45,6 +48,7 @@ internal fun SettingsScreen(
     state: Settings.State,
     onNavigateBack: () -> Unit = {},
     onNavigateToImport: () -> Unit = {},
+    onNavigateToExport: () -> Unit = {},
     onAction: (Settings.Action) -> Unit
 ) {
 
@@ -106,6 +110,14 @@ internal fun SettingsScreen(
                             icon = Icons.Rounded.Download,
                             summary = "Import tokens from another authenticator app",
                             onClick = onNavigateToImport
+                        )
+                    }
+                    is Settings.SettingsItem.ExportTokens -> {
+                        SettingsClickableItem(
+                            title = "Export Tokens",
+                            icon = Icons.Rounded.Upload,
+                            summary = "Save a backup of all your tokens to a file",
+                            onClick = onNavigateToExport
                         )
                     }
                     else -> {

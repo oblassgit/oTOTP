@@ -19,8 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.rounded.SaveAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -99,7 +98,10 @@ internal fun ImportSourcePickerScreen(
                     onSelectTwoFas = {
                         filePicker.launch(arrayOf("application/*"))
                     },
-                    onSelectGoogleAuth = onScanGoogleAuth
+                    onSelectGoogleAuth = onScanGoogleAuth,
+                    onSelectOtotpBackup = {
+                        filePicker.launch(arrayOf("application/*"))
+                    }
                 )
             }
             is Import.State.Loading -> {
@@ -184,7 +186,8 @@ internal fun ImportTokensReviewScreen(
 private fun ImportSourceList(
     modifier: Modifier = Modifier,
     onSelectTwoFas: () -> Unit,
-    onSelectGoogleAuth: () -> Unit
+    onSelectGoogleAuth: () -> Unit,
+    onSelectOtotpBackup: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -198,6 +201,36 @@ private fun ImportSourceList(
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.height(4.dp))
+        OutlinedCard(
+            onClick = onSelectOtotpBackup,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SaveAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Column {
+                    Text(
+                        text = "oTOTP Backup",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "Restore from an oTOTP backup file (.ototp)\nSettings > Export Tokens",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
         OutlinedCard(
             onClick = onSelectTwoFas,
             modifier = Modifier.fillMaxWidth()

@@ -37,6 +37,8 @@ import org.olidev.ototp.`import`.ImportSourcePickerScreen
 import org.olidev.ototp.`import`.ImportTokensReviewScreen
 import org.olidev.ototp.`import`.ImportViewModel
 import org.olidev.ototp.settings.Settings
+import org.olidev.ototp.export.ExportScreen
+import org.olidev.ototp.export.ExportViewModel
 import org.olidev.ototp.ui.theme.OTOTPTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +56,7 @@ class MainActivity : ComponentActivity() {
         val viewModel = MyViewModel(repository)
         val settingsViewModel = SettingsViewModel(this)
         val importViewModel = ImportViewModel(repository)
+        val exportViewModel = ExportViewModel(repository)
         val themePreferences = ThemePreferences(this)
 
         super.onCreate(savedInstanceState)
@@ -93,7 +96,14 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             viewModel = settingsViewModel,
                             onNavigateBack = { navController.navigateUp() },
-                            onNavigateToImport = { navController.navigate("import") }
+                            onNavigateToImport = { navController.navigate("import") },
+                            onNavigateToExport = { navController.navigate("export") }
+                        )
+                    }
+                    composable("export") {
+                        ExportScreen(
+                            viewModel = exportViewModel,
+                            onNavigateBack = { navController.navigateUp() }
                         )
                     }
                     composable("import") {

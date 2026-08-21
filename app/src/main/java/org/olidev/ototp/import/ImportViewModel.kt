@@ -32,7 +32,13 @@ internal class ImportViewModel(private val repository: TokenRepository) : ViewMo
         viewModelScope.launch {
             try {
                 val tokens = withContext(Dispatchers.IO) {
-                    TwoFasImporter.parse(inputStream)
+                    val bytes = inputStream.readBytes()
+                    val content = bytes.toString(Charsets.UTF_8)
+                    val json = org.json.JSONObject(content)
+                    when {
+                        json.optString("app") == "oTOTP" -> OtotpImporter.parse(bytes.inputStream())
+                        else -> TwoFasImporter.parse(bytes.inputStream())
+                    }
                 }
                 _state.value = if (tokens.isEmpty()) {
                     Import.State.Error("No TOTP tokens found in the selected file.")
