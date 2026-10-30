@@ -10,6 +10,7 @@ internal interface Settings {
         val settingsItems: List<SettingsItem> = emptyList(),
         val themeMode: ThemeMode = ThemeMode.SYSTEM,
         val dynamicColorsEnabled: Boolean = true,
+        val appVersion : String? = null
     )
 
     sealed interface Action {

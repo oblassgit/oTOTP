@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.datatransport.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -21,7 +22,8 @@ internal class SettingsViewModel(context: Context): ViewModel() {
                 Settings.State(
                     settingsItems = buildSettingsItems(themeMode, dynamicColors),
                     themeMode = themeMode,
-                    dynamicColorsEnabled = dynamicColors
+                    dynamicColorsEnabled = dynamicColors,
+                    appVersion = BuildConfig.VERSION_NAME + if (BuildConfig.DEBUG) " (debug)" else ""
                 )
             }.collect { newState ->
                 _state.value = newState
