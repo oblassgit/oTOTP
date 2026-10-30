@@ -4,11 +4,11 @@ import android.content.Context
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.datatransport.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.olidev.ototp.BuildConfig
 
 internal class SettingsViewModel(context: Context): ViewModel() {
     private val themePreferences = ThemePreferences(context)
