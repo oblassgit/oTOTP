@@ -103,6 +103,7 @@ fun MainScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     var searchActive by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val secrets by viewModel.secrets.collectAsState()
 
     var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -192,7 +193,7 @@ fun MainScreen(
                 val progress = remainingMillis.toFloat() / periodMillis
                 val tick = nowSeconds / token.period
 
-                val secret = viewModel.getSecret(token.id) ?: ""
+                val secret = secrets[token.id] ?: ""
                 val totp = remember(secret, tick, token.digits, token.period) {
                     TOTPUtil.generateTOTPBase32(
                         secret = secret,
@@ -252,8 +253,7 @@ fun TOTPItem(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            Column(
-            ) {
+            Column {
 
                 Text(
                     text = issuer,

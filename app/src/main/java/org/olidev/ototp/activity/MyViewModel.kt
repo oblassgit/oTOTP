@@ -5,16 +5,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import org.olidev.ototp.TOTPToken
-import org.olidev.ototp.db.TOTPTokenEntity
-import org.olidev.ototp.model.TokenRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.olidev.ototp.TOTPToken
+import org.olidev.ototp.db.TOTPTokenEntity
+import org.olidev.ototp.model.TokenRepository
 
 class MyViewModel(
     private val repository: TokenRepository
@@ -22,6 +24,9 @@ class MyViewModel(
 
     private val _tokens = MutableStateFlow<List<TOTPTokenEntity>>(emptyList())
     val tokens: StateFlow<List<TOTPTokenEntity>> = _tokens
+
+    private val _secrets = MutableStateFlow<Map<Long, String>>(emptyMap())
+    val secrets: StateFlow<Map<Long, String>> = _secrets
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
@@ -46,7 +51,14 @@ class MyViewModel(
 
     fun refreshTokens() {
         viewModelScope.launch {
-            _tokens.value = repository.getAllTokens()
+            val tokens = repository.getAllTokens()
+            val secrets = withContext(Dispatchers.IO) {
+                tokens.mapNotNull { token ->
+                    repository.getSecret(token.id)?.let { token.id to it }
+                }.toMap()
+            }
+            _tokens.value = tokens
+            _secrets.value = secrets
         }
     }
 
