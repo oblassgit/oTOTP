@@ -31,16 +31,45 @@ class MyViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
-    val filteredTokens: StateFlow<List<TOTPTokenEntity>> = combine(_tokens, _searchQuery) { tokens, query ->
-        if (query.isBlank()) tokens
-        else tokens.filter { token ->
-            token.issuer.contains(query, ignoreCase = true) ||
-                token.label?.contains(query, ignoreCase = true) == true
-        }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    enum class TokenSort {
+        ASCENDING, DESCENDING,
+    }
+
+    private val _sortOrder = MutableStateFlow(TokenSort.ASCENDING)
+    val sortOrder: StateFlow<TokenSort> = _sortOrder
+
+    val filteredTokens: StateFlow<List<TOTPTokenEntity>> =
+        combine(_tokens, _searchQuery, _sortOrder) { tokens, query, order ->
+            val filtered = if (query.isBlank()) {
+                tokens
+            } else {
+                tokens.filter { token ->
+                    token.issuer.contains(query, ignoreCase = true) || token.label?.contains(
+                        query,
+                        ignoreCase = true
+                    ) == true
+                }
+            }
+
+            var comparator = compareBy<TOTPTokenEntity, String>(
+                String.CASE_INSENSITIVE_ORDER
+            ) { it.issuer }.thenBy(
+                    String.CASE_INSENSITIVE_ORDER
+                ) { it.label.orEmpty() }
+
+            if (order == TokenSort.DESCENDING) {
+                comparator = comparator.reversed()
+            }
+
+            filtered.sortedWith(comparator.thenBy { it.id })
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    fun setSortOrder(order: TokenSort) {
+        _sortOrder.value = order
     }
 
     var tokenDraft: TOTPToken? by mutableStateOf(null)

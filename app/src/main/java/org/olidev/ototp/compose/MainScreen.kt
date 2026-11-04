@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -104,6 +106,8 @@ fun MainScreen(
     var searchActive by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val secrets by viewModel.secrets.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
+    var sortMenuExpanded by remember { mutableStateOf(false) }
 
     var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -149,6 +153,43 @@ fun MainScreen(
                     }
                 },
                 actions = {
+                    Box {
+                        IconButton(onClick = { sortMenuExpanded = true }) {
+                            Icon(
+                                Icons.Default.Sort,
+                                contentDescription = "Sort",
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = sortMenuExpanded,
+                            onDismissRequest = { sortMenuExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("A-Z") },
+                                trailingIcon = {
+                                    if (sortOrder == MyViewModel.TokenSort.ASCENDING) {
+                                        Icon(Icons.Default.Check, contentDescription = null)
+                                    }
+                                },
+                                onClick = {
+                                    viewModel.setSortOrder(MyViewModel.TokenSort.ASCENDING)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Z-A") },
+                                trailingIcon = {
+                                    if (sortOrder == MyViewModel.TokenSort.DESCENDING) {
+                                        Icon(Icons.Default.Check, contentDescription = null)
+                                    }
+                                },
+                                onClick = {
+                                    viewModel.setSortOrder(MyViewModel.TokenSort.DESCENDING)
+                                }
+                            )
+                        }
+                    }
+
                     if (searchActive) {
                         IconButton(onClick = { closeSearch() }) {
                             Icon(Icons.Rounded.Close, contentDescription = "Close search")
