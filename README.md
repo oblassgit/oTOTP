@@ -1,4 +1,5 @@
 # oTOTP
+![GitHub Release](https://img.shields.io/github/v/release/oblassgit/oTOTP?include_prereleases)
 
 oTOTP is an Android application that provides a secure and user-friendly way to generate time-based one-time passwords (TOTP) for two-factor authentication (2FA). This project is built using Kotlin and Jetpack Compose.
 
