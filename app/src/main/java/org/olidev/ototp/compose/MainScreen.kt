@@ -51,11 +51,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -72,7 +72,6 @@ import androidx.navigation.NavController
 import org.olidev.ototp.TOTPUtil
 import org.olidev.ototp.activity.MyViewModel
 import org.olidev.ototp.db.TOTPTokenEntity
-import kotlinx.coroutines.delay
 
 @Composable
 fun MainScreen(navController: NavController, viewModel: MyViewModel) {
@@ -90,7 +89,7 @@ fun MainScreen(navController: NavController, viewModel: MyViewModel) {
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     viewModel: MyViewModel,
@@ -104,6 +103,16 @@ fun MainScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     var searchActive by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+
+    var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            withFrameNanos {
+                nowMillis = System.currentTimeMillis()
+            }
+        }
+    }
 
     fun closeSearch() {
         searchActive = false
@@ -174,33 +183,33 @@ fun MainScreen(
                 bottom = innerPadding.calculateBottomPadding() + 126.dp
             )
         ) {
-            items(tokens) { token ->
-                var secondsLeft by remember { mutableLongStateOf(0L) }
-                var tick by remember { mutableLongStateOf(0L) }
-                LaunchedEffect(Unit) {
-                    while (true) {
-                        val now = System.currentTimeMillis() / 1000
-                        secondsLeft = token.period - (now % token.period)
-                        tick = now / token.period
-                        delay(1000)
-                    }
-                }
+            items(tokens, key = { it.id }) { token ->
+                val nowSeconds = nowMillis / 1000L
+                val periodMillis = token.period * 1000L
+                val remainingMillis = periodMillis - nowMillis % periodMillis
+
+                val secondsLeft = (remainingMillis + 999L) / 1000L
+                val progress = remainingMillis.toFloat() / periodMillis
+                val tick = nowSeconds / token.period
+
                 val secret = viewModel.getSecret(token.id) ?: ""
-                val totp = remember(secret, tick) {
+                val totp = remember(secret, tick, token.digits, token.period) {
                     TOTPUtil.generateTOTPBase32(
                         secret = secret,
                         digits = token.digits,
-                        period = token.period
+                        period = token.period,
+                        timeSeconds = nowSeconds
                     )
                 }
+
                 TOTPItem(
-                    totp,
-                    token.label,
-                    token.issuer,
-                    token.period,
-                    secondsLeft,
-                    { onEdit(token) },
-                    { onDelete(token.id) }
+                    token = totp,
+                    account = token.label,
+                    issuer = token.issuer,
+                    secondsLeft = secondsLeft,
+                    progress = progress,
+                    onEdit = { onEdit(token) },
+                    onDelete = { onDelete(token.id) }
                 )
             }
         }
@@ -213,8 +222,8 @@ fun TOTPItem(
     token: String,
     account: String?,
     issuer: String,
-    totalSeconds: Int,
     secondsLeft: Long,
+    progress: Float,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -261,7 +270,7 @@ fun TOTPItem(
                 )
             }
 
-            ExpressiveCircularCountdown(totalSeconds, secondsLeft)
+            ExpressiveCircularCountdown(secondsLeft, progress)
         }
 
         DropdownMenu(expanded = dropdownExpanded, onDismissRequest = { dropdownExpanded = false }) {
@@ -306,7 +315,6 @@ fun TOTPItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfirmDeletionDialog(
     onConfirm: () -> Unit,
@@ -352,38 +360,21 @@ fun ConfirmDeletionDialog(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExpressiveCircularCountdown(
-    totalSeconds: Int = 30,
     secondsLeft: Long,
+    progress: Float,
 ) {
-    var smoothProgress by remember { mutableFloatStateOf(secondsLeft / totalSeconds.toFloat()) }
+    val warning = secondsLeft <= WARNING_SECONDS_COUNT
 
-    LaunchedEffect(secondsLeft) {
-        val start = secondsLeft / totalSeconds.toFloat()
-        val end = (secondsLeft - 1) / totalSeconds.toFloat()
-        val duration = 1000L // ms in one second
-
-        val frameRate = 60 // 60 frames per second
-        val frameDelay = 1000L / frameRate
-
-        val startTime = System.currentTimeMillis()
-        var elapsed: Long
-
-        do {
-            elapsed = System.currentTimeMillis() - startTime
-            val fraction = (elapsed / duration.toFloat()).coerceIn(0f, 1f)
-            smoothProgress = start + (end - start) * fraction
-            delay(frameDelay)
-        } while (elapsed < duration)
-        smoothProgress = end
-    }
     Box(contentAlignment = Alignment.Center) {
         CircularWavyProgressIndicator(
-            progress = { smoothProgress.coerceIn(0f, 1f) },
-            color = if (secondsLeft <= WARNING_SECONDS_COUNT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            progress = { progress.coerceIn(0f, 1f) },
+            color = if (warning) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.primary,
         )
         Text(
             text = secondsLeft.toString(),
-            color = if (secondsLeft <= WARNING_SECONDS_COUNT) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+            color = if (warning) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.onBackground,
         )
     }
 }
