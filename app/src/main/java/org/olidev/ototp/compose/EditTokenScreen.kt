@@ -64,11 +64,9 @@ fun AddOrEditTokenScreen(
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 1. Load entity from DB if editing
     val entity by if (tokenId != null) viewModel.getToken(tokenId).collectAsState(initial = null)
     else remember { mutableStateOf<TOTPTokenEntity?>(null) }
 
-    // 2. Load secret only if editing
     var secretLoaded by remember { mutableStateOf(false) }
     var secret by rememberSaveable { mutableStateOf("") }
     LaunchedEffect(tokenId, entity) {
@@ -78,11 +76,9 @@ fun AddOrEditTokenScreen(
         }
     }
 
-    // 3. Use draft if adding via QR, otherwise defaults
     val draft = viewModel.tokenDraft.takeIf { tokenId == null }
     val isEditMode = tokenId != null
 
-    // 4. Initialize state from entity (edit), draft (add w/ QR), or empty (manual add)
     var account by rememberSaveable {
         mutableStateOf(
             draft?.account ?: entity?.label ?: ""
@@ -115,7 +111,6 @@ fun AddOrEditTokenScreen(
     }
     var secretVisibility by rememberSaveable { mutableStateOf(false) }
 
-    // 5. When entity or secret changes (edit mode), update fields if not already set
     LaunchedEffect(entity, secret) {
         if (isEditMode) {
             entity?.let { entity ->
@@ -231,7 +226,7 @@ fun AddOrEditTokenScreen(
 }
 
 @Composable
-fun AdvancedOptionsSection(
+private fun AdvancedOptionsSection(
     title: String = "Advanced Options",
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
@@ -289,7 +284,6 @@ fun TokenOptionsDropdown(
     val digitOptions = TOTPUtil.supportedDigitsList
     val periodOptions = listOf(30, 60)
 
-    // State for dropdown expanded status
     var digitsExpanded by remember { mutableStateOf(false) }
     var periodExpanded by remember { mutableStateOf(false) }
     var algorithmExpanded by remember { mutableStateOf(false) }
@@ -347,7 +341,6 @@ fun TokenOptionsDropdown(
             }
         }
 
-        // Digits Dropdown
         ExposedDropdownMenuBox(
             expanded = digitsExpanded,
             onExpandedChange = { digitsExpanded = !digitsExpanded }
@@ -378,7 +371,6 @@ fun TokenOptionsDropdown(
             }
         }
 
-        // Period Dropdown
         ExposedDropdownMenuBox(
             expanded = periodExpanded,
             onExpandedChange = { periodExpanded = !periodExpanded }
