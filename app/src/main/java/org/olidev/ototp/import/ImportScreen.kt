@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.rounded.Password
 import androidx.compose.material.icons.rounded.SaveAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -104,6 +105,7 @@ internal fun ImportSourcePickerScreen(
                     }
                 )
             }
+
             is Import.State.Loading -> {
                 Box(
                     modifier = Modifier
@@ -114,6 +116,7 @@ internal fun ImportSourcePickerScreen(
                     CircularProgressIndicator()
                 }
             }
+
             is Import.State.Error -> {
                 ImportErrorScreen(
                     message = currentState.message,
@@ -121,6 +124,7 @@ internal fun ImportSourcePickerScreen(
                     onDismiss = { viewModel.handleAction(Import.Action.DismissError) }
                 )
             }
+
             else -> Unit // TokensReady and Success handled by review screen
         }
     }
@@ -161,6 +165,7 @@ internal fun ImportTokensReviewScreen(
                     onConfirm = { viewModel.handleAction(Import.Action.ConfirmImport) }
                 )
             }
+
             is Import.State.Loading -> {
                 Box(
                     modifier = Modifier
@@ -171,12 +176,14 @@ internal fun ImportTokensReviewScreen(
                     CircularProgressIndicator()
                 }
             }
+
             is Import.State.Success -> {
                 ImportSuccessScreen(
                     modifier = Modifier.padding(innerPadding),
                     onDone = onImportSuccess
                 )
             }
+
             else -> Unit // Idle and Error handled by source picker screen
         }
     }
@@ -242,10 +249,11 @@ private fun ImportSourceList(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.import_service_2fas),
+                Icon(
+                    imageVector = Icons.Rounded.Password,
                     contentDescription = null,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Column {
                     Text(
