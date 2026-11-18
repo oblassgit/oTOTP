@@ -7,21 +7,22 @@ plugins {
 
 android {
     namespace = "org.olidev.ototp"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "org.olidev.ototp"
         minSdk = 24
-        targetSdk = 36
-        versionCode = 3
-        versionName = "0.2.0"
+        targetSdk = 37
+        versionCode = 4
+        versionName = "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
