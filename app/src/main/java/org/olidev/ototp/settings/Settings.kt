@@ -43,6 +43,8 @@ internal interface Settings {
 
         internal data object PrivacyPolicy : SettingsItem()
 
+        internal data object OpenSourceLicenses : SettingsItem()
+
         internal sealed interface SettingsSwitchableItem {
             val isEnabled: Boolean
         }

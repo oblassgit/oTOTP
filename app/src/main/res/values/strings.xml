@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">oTOTP</string>
+    <string name="open_source_licenses">Open-source licenses</string>
+    <string name="licenses_back">Back</string>
+    <string name="licenses_close">Close</string>
+    <string name="licenses_scope">Licenses and third-party terms for all release runtime dependencies, including transitive libraries. Tap a library to read its available license text.</string>
+    <string name="licenses_load_error">Unable to load license information.</string>
+    <string name="licenses_empty">No library license information is available.</string>
+    <string name="license_information_unavailable">License information unavailable. Full license text is not bundled for this entry.</string>
 </resources>

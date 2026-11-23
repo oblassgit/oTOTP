@@ -31,6 +31,7 @@ import org.olidev.ototp.db.AppDatabase
 import org.olidev.ototp.model.TokenRepository
 import org.olidev.ototp.model.TotpSecretStorage
 import org.olidev.ototp.settings.SettingsScreen
+import org.olidev.ototp.settings.OpenSourceLicensesScreen
 import org.olidev.ototp.settings.SettingsViewModel
 import org.olidev.ototp.settings.ThemePreferences
 import org.olidev.ototp.`import`.ImportSourcePickerScreen
@@ -97,7 +98,13 @@ class MainActivity : ComponentActivity() {
                             viewModel = settingsViewModel,
                             onNavigateBack = { navController.navigateUp() },
                             onNavigateToImport = { navController.navigate("import") },
-                            onNavigateToExport = { navController.navigate("export") }
+                            onNavigateToExport = { navController.navigate("export") },
+                            onNavigateToLicenses = { navController.navigate("licenses") }
+                        )
+                    }
+                    composable("licenses") {
+                        OpenSourceLicensesScreen(
+                            onNavigateBack = { navController.navigateUp() }
                         )
                     }
                     composable("export") {

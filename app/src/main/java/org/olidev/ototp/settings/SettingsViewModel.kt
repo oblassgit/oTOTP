@@ -65,6 +65,7 @@ internal class SettingsViewModel(context: Context): ViewModel() {
 
         items.add(Settings.SettingsItem.SubHeading("About"))
         items.add(Settings.SettingsItem.PrivacyPolicy)
+        items.add(Settings.SettingsItem.OpenSourceLicenses)
 
         return items
     }

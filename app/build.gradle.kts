@@ -1,4 +1,7 @@
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
 plugins {
+    alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -42,7 +45,37 @@ android {
     }
 }
 
+aboutLibraries {
+    filterVariants = arrayOf("release")
+    includePlatform = false
+}
+
+val generatedLicenseResources = layout.buildDirectory.dir("generated/runtimeLicenses/res")
+val shippingDependencies = providers.provider { configurations.getByName("releaseRuntimeClasspath") }
+val generateRuntimeLicenseDependencies by tasks.registering {
+    val coordinates = shippingDependencies.map { configuration ->
+        configuration.incoming.artifacts.artifacts.mapNotNull {
+            it.id.componentIdentifier as? ModuleComponentIdentifier
+        }.map { "${it.group}:${it.module}" }.distinct().sorted()
+    }
+    inputs.property("coordinates", coordinates)
+    outputs.dir(generatedLicenseResources)
+    doLast {
+        val output = generatedLicenseResources.get().file("raw/runtime_license_dependencies.txt").asFile
+        output.parentFile.mkdirs()
+        output.writeText(coordinates.get().joinToString("\n"))
+    }
+}
+
+android.sourceSets.named("main") {
+    res.srcDir(generatedLicenseResources)
+}
+tasks.named("preBuild") {
+    dependsOn(generateRuntimeLicenseDependencies)
+}
+
 dependencies {
+    implementation(libs.aboutlibraries.core)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

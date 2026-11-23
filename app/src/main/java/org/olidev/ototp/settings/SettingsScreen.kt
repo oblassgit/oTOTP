@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Upload
@@ -25,18 +26,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.olidev.ototp.ui.theme.OTOTPTheme
 import androidx.core.net.toUri
+import org.olidev.ototp.R
 
 @Composable
 internal fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit = {},
     onNavigateToImport: () -> Unit = {},
-    onNavigateToExport: () -> Unit = {}
+    onNavigateToExport: () -> Unit = {},
+    onNavigateToLicenses: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -49,6 +53,7 @@ internal fun SettingsScreen(
         onNavigateBack = onNavigateBack,
         onNavigateToImport = onNavigateToImport,
         onNavigateToExport = onNavigateToExport,
+        onNavigateToLicenses = onNavigateToLicenses,
         onOpenPrivacy = {
             context.startActivity(privacyIntent)
         },
@@ -65,6 +70,7 @@ internal fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToImport: () -> Unit = {},
     onNavigateToExport: () -> Unit = {},
+    onNavigateToLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     onAction: (Settings.Action) -> Unit
 ) {
@@ -156,6 +162,13 @@ internal fun SettingsScreen(
                             onClick = onOpenPrivacy
                         )
                     }
+                    is Settings.SettingsItem.OpenSourceLicenses -> {
+                        SettingsClickableItem(
+                            title = stringResource(R.string.open_source_licenses),
+                            leadingIcon = Icons.Rounded.Description,
+                            onClick = onNavigateToLicenses
+                        )
+                    }
                     else -> {
                         // Handle other settings items if needed
                     }
@@ -176,7 +189,9 @@ fun SettingsScreenPreview() {
                     Settings.SettingsItem.DynamicColors(isEnabled = true),
                     Settings.SettingsItem.SubHeading(text = "Import/Export"),
                     Settings.SettingsItem.ImportTokens,
-                    Settings.SettingsItem.PrivacyPolicy
+                    Settings.SettingsItem.SubHeading(text = "About"),
+                    Settings.SettingsItem.PrivacyPolicy,
+                    Settings.SettingsItem.OpenSourceLicenses
                 )
             ),
             onNavigateBack = {},
