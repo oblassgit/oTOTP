@@ -120,13 +120,13 @@ fun SettingsClickableItem(
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
+    leadingIcon: ImageVector? = null,
     summary: String? = null
 ) {
     SettingsItem(
         title = title,
         modifier = modifier,
-        icon = icon,
+        icon = leadingIcon,
         summary = summary,
         onClick = onClick
     )
@@ -279,7 +279,7 @@ fun SettingsComponentsPreview() {
                 SettingsClickableItem(
                     title = "Advanced Settings",
                     summary = "Configure advanced options",
-                    icon = Icons.Rounded.Settings,
+                    leadingIcon = Icons.Rounded.Settings,
                     onClick = {}
                 )
 

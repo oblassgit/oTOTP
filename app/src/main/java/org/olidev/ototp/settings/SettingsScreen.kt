@@ -1,5 +1,6 @@
 package org.olidev.ototp.settings
 
+import android.content.Intent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -7,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.BottomAppBar
@@ -22,10 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.olidev.ototp.ui.theme.OTOTPTheme
+import androidx.core.net.toUri
 
 @Composable
 internal fun SettingsScreen(
@@ -35,12 +39,19 @@ internal fun SettingsScreen(
     onNavigateToExport: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val privacyIntent = Intent(Intent.ACTION_VIEW).apply {
+        data = "https://olidev.org/privacy.html".toUri()
+    }
 
     SettingsScreen(
         state = state,
         onNavigateBack = onNavigateBack,
         onNavigateToImport = onNavigateToImport,
         onNavigateToExport = onNavigateToExport,
+        onOpenPrivacy = {
+            context.startActivity(privacyIntent)
+        },
         onAction = {
             viewModel.handleAction(it)
         }
@@ -54,6 +65,7 @@ internal fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToImport: () -> Unit = {},
     onNavigateToExport: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
     onAction: (Settings.Action) -> Unit
 ) {
 
@@ -124,7 +136,7 @@ internal fun SettingsScreen(
                     is Settings.SettingsItem.ImportTokens -> {
                         SettingsClickableItem(
                             title = "Import Tokens",
-                            icon = Icons.Rounded.Download,
+                            leadingIcon = Icons.Rounded.Download,
                             summary = "Import tokens from another authenticator app",
                             onClick = onNavigateToImport
                         )
@@ -132,9 +144,16 @@ internal fun SettingsScreen(
                     is Settings.SettingsItem.ExportTokens -> {
                         SettingsClickableItem(
                             title = "Export Tokens",
-                            icon = Icons.Rounded.Upload,
+                            leadingIcon = Icons.Rounded.Upload,
                             summary = "Save a backup of all your tokens to a file",
                             onClick = onNavigateToExport
+                        )
+                    }
+                    is Settings.SettingsItem.PrivacyPolicy -> {
+                        SettingsClickableItem(
+                            title = "Privacy Policy",
+                            leadingIcon = Icons.Rounded.OpenInNew,
+                            onClick = onOpenPrivacy
                         )
                     }
                     else -> {
@@ -156,7 +175,8 @@ fun SettingsScreenPreview() {
                     Settings.SettingsItem.ThemeMode(currentMode = Settings.ThemeMode.LIGHT),
                     Settings.SettingsItem.DynamicColors(isEnabled = true),
                     Settings.SettingsItem.SubHeading(text = "Import/Export"),
-                    Settings.SettingsItem.ImportTokens
+                    Settings.SettingsItem.ImportTokens,
+                    Settings.SettingsItem.PrivacyPolicy
                 )
             ),
             onNavigateBack = {},

@@ -41,6 +41,8 @@ internal interface Settings {
 
         internal data object ExportTokens : SettingsItem()
 
+        internal data object PrivacyPolicy : SettingsItem()
+
         internal sealed interface SettingsSwitchableItem {
             val isEnabled: Boolean
         }

@@ -63,6 +63,9 @@ internal class SettingsViewModel(context: Context): ViewModel() {
             items.add(Settings.SettingsItem.DynamicColors(dynamicColorsEnabled))
         }
 
+        items.add(Settings.SettingsItem.SubHeading("About"))
+        items.add(Settings.SettingsItem.PrivacyPolicy)
+
         return items
     }
 }
